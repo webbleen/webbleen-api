@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/webbleen/go-gin/pkg/setting"
+	"github.com/webbleen/go-gin/routers/api"
 	v1 "github.com/webbleen/go-gin/routers/api/v1"
 )
 
@@ -15,6 +16,8 @@ func InitRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	gin.SetMode(setting.RunMode)
+
+	r.GET("/auth", api.GetAuth)
 
 	apiv1 := r.Group("/api/v1")
 	{
