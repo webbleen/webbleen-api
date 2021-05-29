@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/webbleen/go-gin/middleware/jwt"
 	"github.com/webbleen/go-gin/pkg/setting"
 	"github.com/webbleen/go-gin/routers/api"
 	v1 "github.com/webbleen/go-gin/routers/api/v1"
@@ -20,6 +21,7 @@ func InitRouter() *gin.Engine {
 	r.GET("/auth", api.GetAuth)
 
 	apiv1 := r.Group("/api/v1")
+	apiv1.Use(jwt.JWT())
 	{
 		//获取标签列表
 		apiv1.GET("/tags", v1.GetTags)
