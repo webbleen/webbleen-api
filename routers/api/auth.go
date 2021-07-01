@@ -11,25 +11,24 @@ import (
 	"github.com/webbleen/go-gin/pkg/util"
 )
 
-type auth struct {
-	Username string `valid:"Required; MaxSize(50)"`
-	Password string `valid:"Required; MaxSize(50)"`
+type AuthLogin struct {
+	Username string `json:"username" binding:"required" valid:"Required; MaxSize(50)"`
+	Password string `json:"password" binding:"required" valid:"Required; MaxSize(50)"`
 }
 
-func GetAuth(c *gin.Context) {
-	username := c.Query("username")
-	password := c.Query("password")
+func Login(c *gin.Context) {
+	var a AuthLogin
+	c.BindJSON(&a)
 
 	valid := validation.Validation{}
-	a := auth{Username: username, Password: password}
 	ok, _ := valid.Valid(&a)
 
 	data := make(map[string]interface{})
 	code := e.INVALID_PARAMS
 	if ok {
-		isExist := models.CheckAuth(username, password)
+		isExist := models.CheckAuth(a.Username, a.Password)
 		if isExist {
-			token, err := util.GenerateToken(username, password)
+			token, err := util.GenerateToken(a.Username, a.Password)
 			if err != nil {
 				code = e.ERROR_AUTH_TOKEN
 			} else {
@@ -46,6 +45,17 @@ func GetAuth(c *gin.Context) {
 			logging.Info(err.Key, err.Message)
 		}
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": code,
+		"msg":  e.GetMsg(code),
+		"data": data,
+	})
+}
+
+func Logout(c *gin.Context) {
+	code := e.SUCCESS
+	data := make(map[string]interface{})
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": code,

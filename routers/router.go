@@ -1,6 +1,9 @@
 package routers
 
 import (
+	"time"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	ginswagger "github.com/swaggo/gin-swagger"
@@ -15,6 +18,31 @@ import (
 func InitRouter() *gin.Engine {
 	r := gin.New()
 
+	// Cors設定
+	r.Use(cors.New(cors.Co
+		AllowOrigins: []string{
+			"http://127.0.0.1:8080",
+			"http://192.168.0.7:8080",
+		},
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowHeaders: []string{
+			"Access-Control-Allow-Credentials",
+			"Access-Control-Allow-Headers",
+			"Content-Type",
+			"Content-Length",
+			"Accept-Encoding",
+			"Authorization",
+		},
+		AllowCredentials: true,
+		MaxAge: 24 * time.Hour,
+	}))
+
 	r.Use(gin.Logger())
 
 	r.Use(gin.Recovery())
@@ -23,7 +51,8 @@ func InitRouter() *gin.Engine {
 
 	r.GET("/swagger/*any", ginswagger.WrapHandler(swaggerFiles.Handler))
 
-	r.GET("/auth", api.GetAuth)
+	r.POST("/api/auth/login", api.Login)
+	r.POST("/api/auth/logout", api.Logout)
 
 	apiv1 := r.Group("/api/v1")
 	apiv1.Use(jwt.JWT())
