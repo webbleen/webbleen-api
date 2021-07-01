@@ -19,7 +19,7 @@ func InitRouter() *gin.Engine {
 	r := gin.New()
 
 	// Cors設定
-	r.Use(cors.New(cors.Co
+	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://127.0.0.1:8080",
 			"http://192.168.0.7:8080",
@@ -40,7 +40,7 @@ func InitRouter() *gin.Engine {
 			"Authorization",
 		},
 		AllowCredentials: true,
-		MaxAge: 24 * time.Hour,
+		MaxAge:           24 * time.Hour,
 	}))
 
 	r.Use(gin.Logger())
