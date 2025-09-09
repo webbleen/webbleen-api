@@ -131,7 +131,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "created_on": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "device": {
                     "type": "string"
@@ -146,7 +146,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "modified_on": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "os": {
                     "type": "string"
@@ -161,9 +161,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_agent": {
-                    "type": "string"
-                },
-                "visit_time": {
                     "type": "string"
                 }
             }

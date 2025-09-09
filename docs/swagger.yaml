@@ -9,7 +9,7 @@ definitions:
       country:
         type: string
       created_on:
-        type: integer
+        type: string
       device:
         type: string
       id:
@@ -19,7 +19,7 @@ definitions:
       language:
         type: string
       modified_on:
-        type: integer
+        type: string
       os:
         type: string
       page:
@@ -29,8 +29,6 @@ definitions:
       session_id:
         type: string
       user_agent:
-        type: string
-      visit_time:
         type: string
     type: object
 host: api.webbleen.com

@@ -9,18 +9,17 @@ import (
 // VisitRecord 访问记录模型
 type VisitRecord struct {
 	Model
-	IP        string    `json:"ip" gorm:"size:45"`
-	UserAgent string    `json:"user_agent" gorm:"size:500"`
-	Referer   string    `json:"referer" gorm:"size:500"`
-	Page      string    `json:"page" gorm:"size:200"`
-	VisitTime time.Time `json:"visit_time"`
-	SessionID string    `json:"session_id" gorm:"size:100"`
-	Country   string    `json:"country" gorm:"size:50"`
-	City      string    `json:"city" gorm:"size:50"`
-	Device    string    `json:"device" gorm:"size:50"`
-	Browser   string    `json:"browser" gorm:"size:50"`
-	OS        string    `json:"os" gorm:"size:50"`
-	Language  string    `json:"language" gorm:"size:10"`
+	IP        string `json:"ip" gorm:"size:45"`
+	UserAgent string `json:"user_agent" gorm:"size:500"`
+	Referer   string `json:"referer" gorm:"size:500"`
+	Page      string `json:"page" gorm:"size:200"`
+	SessionID string `json:"session_id" gorm:"size:100"`
+	Country   string `json:"country" gorm:"size:50"`
+	City      string `json:"city" gorm:"size:50"`
+	Device    string `json:"device" gorm:"size:50"`
+	Browser   string `json:"browser" gorm:"size:50"`
+	OS        string `json:"os" gorm:"size:50"`
+	Language  string `json:"language" gorm:"size:10"`
 }
 
 // 访问记录相关方法

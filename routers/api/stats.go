@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/webbleen/go-gin/models"
@@ -83,7 +82,6 @@ func RecordVisit(c *gin.Context) {
 	}
 	visitRecord.UserAgent = c.GetHeader("User-Agent")
 	visitRecord.Referer = c.GetHeader("Referer")
-	visitRecord.VisitTime = time.Now()
 
 	// 保存访问记录
 	models.AddVisitRecord(&visitRecord)

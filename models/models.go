@@ -2,6 +2,7 @@ package models
 
 import (
 	"log"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -12,9 +13,9 @@ import (
 var db *gorm.DB
 
 type Model struct {
-	ID         int `gorm:"primary_key" json:"id"`
-	CreatedOn  int `json:"created_on"`
-	ModifiedOn int `json:"modified_on"`
+	ID         int       `gorm:"primary_key" json:"id"`
+	CreatedOn  time.Time `json:"created_on"`
+	ModifiedOn time.Time `json:"modified_on"`
 }
 
 func init() {
