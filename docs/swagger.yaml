@@ -61,53 +61,6 @@ paths:
       summary: 获取用户行为分析
       tags:
       - 统计
-  /stats/content:
-    get:
-      consumes:
-      - application/json
-      description: 获取博客文章、标签、分类等内容统计信息
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 获取内容统计
-      tags:
-      - 统计
-    post:
-      consumes:
-      - application/x-www-form-urlencoded
-      description: 用于同步Hugo博客的内容统计信息
-      parameters:
-      - description: 文章数量
-        in: formData
-        name: articles
-        required: true
-        type: integer
-      - description: 标签数量
-        in: formData
-        name: tags
-        required: true
-        type: integer
-      - description: 分类数量
-        in: formData
-        name: categories
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 更新内容统计
-      tags:
-      - 统计
   /stats/daily:
     get:
       consumes:

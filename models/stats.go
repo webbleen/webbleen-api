@@ -41,15 +41,6 @@ type DailyStats struct {
 	AvgTime        int       `json:"avg_time"` // 平均停留时间（秒）
 }
 
-// ContentStats 内容统计模型
-type ContentStats struct {
-	Model
-	TotalArticles   int       `json:"total_articles"`
-	TotalTags       int       `json:"total_tags"`
-	TotalCategories int       `json:"total_categories"`
-	LastUpdate      time.Time `json:"last_update"`
-}
-
 // 访问记录相关方法
 func AddVisitRecord(record *VisitRecord) bool {
 	db.Create(record)
@@ -104,22 +95,6 @@ func GetDailyStats(limit int) []DailyStats {
 	var stats []DailyStats
 	db.Order("date DESC").Limit(limit).Find(&stats)
 	return stats
-}
-
-func GetContentStats() ContentStats {
-	var stats ContentStats
-	db.Last(&stats)
-	return stats
-}
-
-func UpdateContentStats(articles, tags, categories int) {
-	stats := ContentStats{
-		TotalArticles:   articles,
-		TotalTags:       tags,
-		TotalCategories: categories,
-		LastUpdate:      time.Now(),
-	}
-	db.Create(&stats)
 }
 
 func GetTopPages(limit int) []PageView {
@@ -186,11 +161,6 @@ func (pageView *PageView) BeforeCreate(scope *gorm.Scope) error {
 }
 
 func (dailyStats *DailyStats) BeforeCreate(scope *gorm.Scope) error {
-	scope.SetColumn("CreatedOn", time.Now().Unix())
-	return nil
-}
-
-func (contentStats *ContentStats) BeforeCreate(scope *gorm.Scope) error {
 	scope.SetColumn("CreatedOn", time.Now().Unix())
 	return nil
 }

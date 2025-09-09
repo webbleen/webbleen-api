@@ -32,7 +32,7 @@ func init() {
 	db.DB().SetMaxOpenConns(100)
 
 	// 自动迁移统计相关表
-	db.AutoMigrate(&VisitRecord{}, &PageView{}, &DailyStats{}, &ContentStats{})
+	db.AutoMigrate(&VisitRecord{}, &PageView{}, &DailyStats{})
 }
 
 func CloseDB() {
