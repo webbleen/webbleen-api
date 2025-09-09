@@ -1,4 +1,4 @@
-package v1
+package api
 
 import (
 	"net/http"
@@ -10,7 +10,14 @@ import (
 	"github.com/webbleen/go-gin/pkg/e"
 )
 
-// 获取访问统计概览
+// GetVisitStats 获取访问统计概览
+// @Summary 获取访问统计概览
+// @Description 获取今日访问量、累计访问量、独立访客等统计信息
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/visits [get]
 func GetVisitStats(c *gin.Context) {
 	data := make(map[string]interface{})
 
@@ -44,7 +51,15 @@ func GetVisitStats(c *gin.Context) {
 	})
 }
 
-// 记录访问
+// RecordVisit 记录访问
+// @Summary 记录访问
+// @Description 记录用户访问信息，包括页面路径、设备信息、地理位置等
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Param visitRecord body models.VisitRecord true "访问记录"
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/visit [post]
 func RecordVisit(c *gin.Context) {
 	var visitRecord models.VisitRecord
 
@@ -76,7 +91,14 @@ func RecordVisit(c *gin.Context) {
 	})
 }
 
-// 获取内容统计
+// GetContentStats 获取内容统计
+// @Summary 获取内容统计
+// @Description 获取博客文章、标签、分类等内容统计信息
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/content [get]
 func GetContentStats(c *gin.Context) {
 	stats := models.GetContentStats()
 
@@ -87,7 +109,15 @@ func GetContentStats(c *gin.Context) {
 	})
 }
 
-// 获取热门页面
+// GetTopPages 获取热门页面
+// @Summary 获取热门页面
+// @Description 获取访问量最高的页面列表
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Param limit query int false "限制数量" default(10)
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/pages [get]
 func GetTopPages(c *gin.Context) {
 	limit := 10
 	if l := c.Query("limit"); l != "" {
@@ -103,7 +133,15 @@ func GetTopPages(c *gin.Context) {
 	})
 }
 
-// 获取访问趋势
+// GetVisitTrend 获取访问趋势
+// @Summary 获取访问趋势
+// @Description 获取指定天数的访问趋势数据
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Param days query int false "天数" default(30)
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/trend [get]
 func GetVisitTrend(c *gin.Context) {
 	days := 30
 	if d := c.Query("days"); d != "" {
@@ -119,7 +157,14 @@ func GetVisitTrend(c *gin.Context) {
 	})
 }
 
-// 获取用户行为分析
+// GetUserBehavior 获取用户行为分析
+// @Summary 获取用户行为分析
+// @Description 获取设备、浏览器、操作系统、地理位置等用户行为统计
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/behavior [get]
 func GetUserBehavior(c *gin.Context) {
 	behavior := models.GetUserBehaviorStats()
 
@@ -130,7 +175,15 @@ func GetUserBehavior(c *gin.Context) {
 	})
 }
 
-// 获取日统计
+// GetDailyStats 获取日统计
+// @Summary 获取日统计
+// @Description 获取每日统计数据
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Param limit query int false "限制天数" default(30)
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/daily [get]
 func GetDailyStats(c *gin.Context) {
 	limit := 30
 	if l := c.Query("limit"); l != "" {
@@ -146,7 +199,17 @@ func GetDailyStats(c *gin.Context) {
 	})
 }
 
-// 更新内容统计（用于同步Hugo博客的内容）
+// UpdateContentStats 更新内容统计
+// @Summary 更新内容统计
+// @Description 用于同步Hugo博客的内容统计信息
+// @Tags 统计
+// @Accept application/x-www-form-urlencoded
+// @Produce json
+// @Param articles formData int true "文章数量"
+// @Param tags formData int true "标签数量"
+// @Param categories formData int true "分类数量"
+// @Success 200 {object} map[string]interface{} "成功"
+// @Router /stats/content [post]
 func UpdateContentStats(c *gin.Context) {
 	articles := c.PostForm("articles")
 	tags := c.PostForm("tags")

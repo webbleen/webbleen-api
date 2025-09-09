@@ -1,8 +1,325 @@
 {
+    "schemes": [
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
-        "contact": {},
-        "license": {}
+        "description": "Webbleen 博客 API 服务，提供统计、内容管理等功能",
+        "title": "Webbleen 博客 API 服务",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Webbleen",
+            "url": "https://webbleen.com",
+            "email": "contact@webbleen.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
     },
-    "paths": {}
+    "host": "api.webbleen.com",
+    "basePath": "/",
+    "paths": {
+        "/stats/behavior": {
+            "get": {
+                "description": "获取设备、浏览器、操作系统、地理位置等用户行为统计",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取用户行为分析",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/content": {
+            "get": {
+                "description": "获取博客文章、标签、分类等内容统计信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取内容统计",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "用于同步Hugo博客的内容统计信息",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "更新内容统计",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章数量",
+                        "name": "articles",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "标签数量",
+                        "name": "tags",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分类数量",
+                        "name": "categories",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/daily": {
+            "get": {
+                "description": "获取每日统计数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取日统计",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "限制天数",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/pages": {
+            "get": {
+                "description": "获取访问量最高的页面列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取热门页面",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "限制数量",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/trend": {
+            "get": {
+                "description": "获取指定天数的访问趋势数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取访问趋势",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "天数",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/visit": {
+            "post": {
+                "description": "记录用户访问信息，包括页面路径、设备信息、地理位置等",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "记录访问",
+                "parameters": [
+                    {
+                        "description": "访问记录",
+                        "name": "visitRecord",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.VisitRecord"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/visits": {
+            "get": {
+                "description": "获取今日访问量、累计访问量、独立访客等统计信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取访问统计概览",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.VisitRecord": {
+            "type": "object",
+            "properties": {
+                "browser": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_on": {
+                    "type": "integer"
+                },
+                "device": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ip": {
+                    "type": "string"
+                },
+                "modified_on": {
+                    "type": "integer"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "string"
+                },
+                "referer": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "user_agent": {
+                    "type": "string"
+                },
+                "visit_time": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }

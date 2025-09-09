@@ -6,7 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// 访问记录模型
+// VisitRecord 访问记录模型
 type VisitRecord struct {
 	Model
 	IP        string    `json:"ip" gorm:"size:45"`
@@ -22,7 +22,7 @@ type VisitRecord struct {
 	OS        string    `json:"os" gorm:"size:50"`
 }
 
-// 页面访问统计模型
+// PageView 页面访问统计模型
 type PageView struct {
 	Model
 	Page        string    `json:"page" gorm:"size:200;unique_index"`
@@ -31,7 +31,7 @@ type PageView struct {
 	UniqueViews int       `json:"unique_views"`
 }
 
-// 日访问统计模型
+// DailyStats 日访问统计模型
 type DailyStats struct {
 	Model
 	Date           time.Time `json:"date" gorm:"unique_index"`
@@ -41,7 +41,7 @@ type DailyStats struct {
 	AvgTime        int       `json:"avg_time"` // 平均停留时间（秒）
 }
 
-// 内容统计模型
+// ContentStats 内容统计模型
 type ContentStats struct {
 	Model
 	TotalArticles   int       `json:"total_articles"`

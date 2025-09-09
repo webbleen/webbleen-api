@@ -10,7 +10,7 @@ import (
 	swaggerFiles "github.com/swaggo/gin-swagger/swaggerFiles"
 	_ "github.com/webbleen/go-gin/docs"
 	"github.com/webbleen/go-gin/pkg/setting"
-	v1 "github.com/webbleen/go-gin/routers/api/v1"
+	"github.com/webbleen/go-gin/routers/api"
 )
 
 func InitRouter() *gin.Engine {
@@ -57,21 +57,21 @@ func InitRouter() *gin.Engine {
 	stats := r.Group("/stats")
 	{
 		// 记录访问
-		stats.POST("/visit", v1.RecordVisit)
+		stats.POST("/visit", api.RecordVisit)
 		// 获取访问统计
-		stats.GET("/visits", v1.GetVisitStats)
+		stats.GET("/visits", api.GetVisitStats)
 		// 获取内容统计
-		stats.GET("/content", v1.GetContentStats)
+		stats.GET("/content", api.GetContentStats)
 		// 获取热门页面
-		stats.GET("/pages", v1.GetTopPages)
+		stats.GET("/pages", api.GetTopPages)
 		// 获取访问趋势
-		stats.GET("/trend", v1.GetVisitTrend)
+		stats.GET("/trend", api.GetVisitTrend)
 		// 获取用户行为分析
-		stats.GET("/behavior", v1.GetUserBehavior)
+		stats.GET("/behavior", api.GetUserBehavior)
 		// 获取日统计
-		stats.GET("/daily", v1.GetDailyStats)
+		stats.GET("/daily", api.GetDailyStats)
 		// 更新内容统计
-		stats.POST("/content", v1.UpdateContentStats)
+		stats.POST("/content", api.UpdateContentStats)
 	}
 
 	return r

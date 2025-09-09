@@ -1,3 +1,19 @@
+// @title Webbleen 博客 API 服务
+// @version 1.0
+// @description Webbleen 博客 API 服务，提供统计、内容管理等功能
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Webbleen
+// @contact.url https://webbleen.com
+// @contact.email contact@webbleen.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host api.webbleen.com
+// @BasePath /
+// @schemes https
+
 package main
 
 import (

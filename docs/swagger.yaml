@@ -1,5 +1,218 @@
+basePath: /
+definitions:
+  models.VisitRecord:
+    properties:
+      browser:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      created_on:
+        type: integer
+      device:
+        type: string
+      id:
+        type: integer
+      ip:
+        type: string
+      modified_on:
+        type: integer
+      os:
+        type: string
+      page:
+        type: string
+      referer:
+        type: string
+      session_id:
+        type: string
+      user_agent:
+        type: string
+      visit_time:
+        type: string
+    type: object
+host: api.webbleen.com
 info:
-  contact: {}
-  license: {}
-paths: {}
+  contact:
+    email: contact@webbleen.com
+    name: Webbleen
+    url: https://webbleen.com
+  description: Webbleen 博客 API 服务，提供统计、内容管理等功能
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Webbleen 博客 API 服务
+  version: "1.0"
+paths:
+  /stats/behavior:
+    get:
+      consumes:
+      - application/json
+      description: 获取设备、浏览器、操作系统、地理位置等用户行为统计
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户行为分析
+      tags:
+      - 统计
+  /stats/content:
+    get:
+      consumes:
+      - application/json
+      description: 获取博客文章、标签、分类等内容统计信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取内容统计
+      tags:
+      - 统计
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 用于同步Hugo博客的内容统计信息
+      parameters:
+      - description: 文章数量
+        in: formData
+        name: articles
+        required: true
+        type: integer
+      - description: 标签数量
+        in: formData
+        name: tags
+        required: true
+        type: integer
+      - description: 分类数量
+        in: formData
+        name: categories
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 更新内容统计
+      tags:
+      - 统计
+  /stats/daily:
+    get:
+      consumes:
+      - application/json
+      description: 获取每日统计数据
+      parameters:
+      - default: 30
+        description: 限制天数
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取日统计
+      tags:
+      - 统计
+  /stats/pages:
+    get:
+      consumes:
+      - application/json
+      description: 获取访问量最高的页面列表
+      parameters:
+      - default: 10
+        description: 限制数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取热门页面
+      tags:
+      - 统计
+  /stats/trend:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定天数的访问趋势数据
+      parameters:
+      - default: 30
+        description: 天数
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取访问趋势
+      tags:
+      - 统计
+  /stats/visit:
+    post:
+      consumes:
+      - application/json
+      description: 记录用户访问信息，包括页面路径、设备信息、地理位置等
+      parameters:
+      - description: 访问记录
+        in: body
+        name: visitRecord
+        required: true
+        schema:
+          $ref: '#/definitions/models.VisitRecord'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 记录访问
+      tags:
+      - 统计
+  /stats/visits:
+    get:
+      consumes:
+      - application/json
+      description: 获取今日访问量、累计访问量、独立访客等统计信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取访问统计概览
+      tags:
+      - 统计
+schemes:
+- https
 swagger: "2.0"
