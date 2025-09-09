@@ -51,17 +51,20 @@ func GetVisitStats(c *gin.Context) {
 func RecordVisit(c *gin.Context) {
 	var visitRecord models.VisitRecord
 
-	// 从请求中获取访问信息
+	// 从 JSON 请求体中获取访问信息
+	if err := c.ShouldBindJSON(&visitRecord); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "Invalid JSON data",
+			"data": make(map[string]interface{}),
+		})
+		return
+	}
+
+	// 设置服务器端信息
 	visitRecord.IP = c.ClientIP()
 	visitRecord.UserAgent = c.GetHeader("User-Agent")
 	visitRecord.Referer = c.GetHeader("Referer")
-	visitRecord.Page = c.Query("page")
-	visitRecord.SessionID = c.Query("session_id")
-	visitRecord.Country = c.Query("country")
-	visitRecord.City = c.Query("city")
-	visitRecord.Device = c.Query("device")
-	visitRecord.Browser = c.Query("browser")
-	visitRecord.OS = c.Query("os")
 	visitRecord.VisitTime = time.Now()
 
 	// 保存访问记录
