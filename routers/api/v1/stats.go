@@ -2,6 +2,7 @@ package v1
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -147,11 +148,16 @@ func GetDailyStats(c *gin.Context) {
 
 // 更新内容统计（用于同步Hugo博客的内容）
 func UpdateContentStats(c *gin.Context) {
-	articles := c.GetInt("articles")
-	tags := c.GetInt("tags")
-	categories := c.GetInt("categories")
+	articles := c.PostForm("articles")
+	tags := c.PostForm("tags")
+	categories := c.PostForm("categories")
 
-	models.UpdateContentStats(articles, tags, categories)
+	// 转换为整数
+	articlesInt, _ := strconv.Atoi(articles)
+	tagsInt, _ := strconv.Atoi(tags)
+	categoriesInt, _ := strconv.Atoi(categories)
+
+	models.UpdateContentStats(articlesInt, tagsInt, categoriesInt)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
