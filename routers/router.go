@@ -24,6 +24,7 @@ func InitRouter() *gin.Engine {
 			"http://localhost:1313",
 			"https://webbleen.com",
 			"https://www.webbleen.com",
+			"https://webbleen.github.io",
 		},
 		AllowMethods: []string{
 			"GET",
@@ -53,24 +54,24 @@ func InitRouter() *gin.Engine {
 	r.GET("/swagger/*any", ginswagger.WrapHandler(swaggerFiles.Handler))
 
 	// 统计相关API - 不需要认证
-	api := r.Group("/api")
+	stats := r.Group("/stats")
 	{
 		// 记录访问
-		api.POST("/visit", v1.RecordVisit)
+		stats.POST("/visit", v1.RecordVisit)
 		// 获取访问统计
-		api.GET("/stats/visits", v1.GetVisitStats)
+		stats.GET("/visits", v1.GetVisitStats)
 		// 获取内容统计
-		api.GET("/stats/content", v1.GetContentStats)
+		stats.GET("/content", v1.GetContentStats)
 		// 获取热门页面
-		api.GET("/stats/pages", v1.GetTopPages)
+		stats.GET("/pages", v1.GetTopPages)
 		// 获取访问趋势
-		api.GET("/stats/trend", v1.GetVisitTrend)
+		stats.GET("/trend", v1.GetVisitTrend)
 		// 获取用户行为分析
-		api.GET("/stats/behavior", v1.GetUserBehavior)
+		stats.GET("/behavior", v1.GetUserBehavior)
 		// 获取日统计
-		api.GET("/stats/daily", v1.GetDailyStats)
+		stats.GET("/daily", v1.GetDailyStats)
 		// 更新内容统计
-		api.POST("/stats/content", v1.UpdateContentStats)
+		stats.POST("/content", v1.UpdateContentStats)
 	}
 
 	return r

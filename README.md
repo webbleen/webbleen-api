@@ -20,7 +20,7 @@
 
 ### 记录访问
 ```
-POST /api/visit
+POST /stats/visit
 ```
 参数：
 - `page`: 页面路径
@@ -33,43 +33,43 @@ POST /api/visit
 
 ### 获取访问统计
 ```
-GET /api/stats/visits
+GET /stats/visits
 ```
 返回今日访问量、累计访问量、页面浏览量等
 
 ### 获取内容统计
 ```
-GET /api/stats/content
+GET /stats/content
 ```
 返回文章数量、标签数量、分类数量等
 
 ### 获取热门页面
 ```
-GET /api/stats/pages?limit=10
+GET /stats/pages?limit=10
 ```
 返回访问量最高的页面列表
 
 ### 获取访问趋势
 ```
-GET /api/stats/trend?days=30
+GET /stats/trend?days=30
 ```
 返回指定天数的访问趋势数据
 
 ### 获取用户行为分析
 ```
-GET /api/stats/behavior
+GET /stats/behavior
 ```
 返回设备、浏览器、操作系统、地理位置等统计
 
 ### 获取日统计
 ```
-GET /api/stats/daily?limit=30
+GET /stats/daily?limit=30
 ```
 返回每日统计数据
 
 ### 更新内容统计
 ```
-POST /api/stats/content
+POST /stats/content
 ```
 参数：
 - `articles`: 文章数量
