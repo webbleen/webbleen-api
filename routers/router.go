@@ -9,9 +9,7 @@ import (
 	ginswagger "github.com/swaggo/gin-swagger"
 	swaggerFiles "github.com/swaggo/gin-swagger/swaggerFiles"
 	_ "github.com/webbleen/go-gin/docs"
-	"github.com/webbleen/go-gin/middleware/jwt"
 	"github.com/webbleen/go-gin/pkg/setting"
-	"github.com/webbleen/go-gin/routers/api"
 	v1 "github.com/webbleen/go-gin/routers/api/v1"
 )
 
@@ -23,6 +21,9 @@ func InitRouter() *gin.Engine {
 		AllowOrigins: []string{
 			"http://127.0.0.1:8080",
 			"http://192.168.0.7:8080",
+			"http://localhost:1313",
+			"https://webbleen.com",
+			"https://www.webbleen.com",
 		},
 		AllowMethods: []string{
 			"GET",
@@ -51,30 +52,25 @@ func InitRouter() *gin.Engine {
 
 	r.GET("/swagger/*any", ginswagger.WrapHandler(swaggerFiles.Handler))
 
-	r.POST("/api/auth/login", api.Login)
-	r.POST("/api/auth/logout", api.Logout)
-
-	apiv1 := r.Group("/api/v1")
-	apiv1.Use(jwt.JWT())
+	// 统计相关API - 不需要认证
+	api := r.Group("/api")
 	{
-		//获取标签列表
-		apiv1.GET("/tags", v1.GetTags)
-		//新建标签
-		apiv1.POST("/tags", v1.AddTag)
-		//更新指定标签
-		apiv1.PUT("/tags/:id", v1.EditTag)
-		//删除指定标签
-		apiv1.DELETE("/tags/:id", v1.DeleteTag)
-		//获取文章列表
-		apiv1.GET("/articles", v1.GetArticles)
-		//获取指定文章
-		apiv1.GET("/articles/:id", v1.GetArticle)
-		//新建文章
-		apiv1.POST("/articles", v1.AddArticle)
-		//更新指定文章
-		apiv1.PUT("/articles/:id", v1.EditArticle)
-		//删除指定文章
-		apiv1.DELETE("/articles/:id", v1.DeleteArticle)
+		// 记录访问
+		api.POST("/visit", v1.RecordVisit)
+		// 获取访问统计
+		api.GET("/stats/visits", v1.GetVisitStats)
+		// 获取内容统计
+		api.GET("/stats/content", v1.GetContentStats)
+		// 获取热门页面
+		api.GET("/stats/pages", v1.GetTopPages)
+		// 获取访问趋势
+		api.GET("/stats/trend", v1.GetVisitTrend)
+		// 获取用户行为分析
+		api.GET("/stats/behavior", v1.GetUserBehavior)
+		// 获取日统计
+		api.GET("/stats/daily", v1.GetDailyStats)
+		// 更新内容统计
+		api.POST("/stats/content", v1.UpdateContentStats)
 	}
 
 	return r

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客统计 - Webbleen</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .stat-change {
+            font-size: 12px;
+            color: #28a745;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>博客统计</h1>
+        
+        <div id="loading" class="loading">加载中...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <!-- 访问统计概览 -->
+        <div class="stats-grid" id="visit-stats">
+            <div class="stat-card">
+                <div class="stat-title">今日访问量</div>
+                <div class="stat-value" id="today-visits">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">累计访问量</div>
+                <div class="stat-value" id="total-visits">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">今日独立访客</div>
+                <div class="stat-value" id="unique-visitors">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">总页面浏览量</div>
+                <div class="stat-value" id="total-page-views">-</div>
+            </div>
+        </div>
+        
+        <!-- 内容统计 -->
+        <div class="stats-grid" id="content-stats">
+            <div class="stat-card">
+                <div class="stat-title">文章数量</div>
+                <div class="stat-value" id="total-articles">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">标签数量</div>
+                <div class="stat-value" id="total-tags">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">分类数量</div>
+                <div class="stat-value" id="total-categories">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">最后更新</div>
+                <div class="stat-value" id="last-update">-</div>
+            </div>
+        </div>
+        
+        <!-- 访问趋势图 -->
+        <div class="chart-container">
+            <div class="chart-title">访问趋势</div>
+            <canvas id="trend-chart"></canvas>
+        </div>
+        
+        <!-- 热门页面 -->
+        <div class="chart-container">
+            <div class="chart-title">热门页面</div>
+            <div id="top-pages"></div>
+        </div>
+        
+        <!-- 用户行为分析 -->
+        <div class="chart-container">
+            <div class="chart-title">设备分布</div>
+            <canvas id="device-chart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">浏览器分布</div>
+            <canvas id="browser-chart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 配置API地址
+        const API_BASE = 'http://localhost:8000/api';
+        
+        // 显示错误
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+        
+        // 加载访问统计
+        async function loadVisitStats() {
+            try {
+                const response = await fetch(API_BASE + '/stats/visits');
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    document.getElementById('today-visits').textContent = data.data.today_visits || 0;
+                    document.getElementById('total-visits').textContent = data.data.total_visits || 0;
+                    document.getElementById('unique-visitors').textContent = data.data.unique_visitors_today || 0;
+                    document.getElementById('total-page-views').textContent = data.data.total_page_views || 0;
+                } else {
+                    throw new Error(data.msg);
+                }
+            } catch (error) {
+                console.error('Error loading visit stats:', error);
+                showError('加载访问统计失败: ' + error.message);
+            }
+        }
+        
+        // 加载内容统计
+        async function loadContentStats() {
+            try {
+                const response = await fetch(API_BASE + '/stats/content');
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    document.getElementById('total-articles').textContent = data.data.total_articles || 0;
+                    document.getElementById('total-tags').textContent = data.data.total_tags || 0;
+                    document.getElementById('total-categories').textContent = data.data.total_categories || 0;
+                    document.getElementById('last-update').textContent = data.data.last_update ? 
+                        new Date(data.data.last_update).toLocaleDateString() : '-';
+                } else {
+                    throw new Error(data.msg);
+                }
+            } catch (error) {
+                console.error('Error loading content stats:', error);
+                showError('加载内容统计失败: ' + error.message);
+            }
+        }
+        
+        // 加载访问趋势
+        async function loadVisitTrend() {
+            try {
+                const response = await fetch(API_BASE + '/stats/trend?days=30');
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    const trendData = data.data;
+                    const labels = trendData.map(item => new Date(item.date).toLocaleDateString());
+                    const visits = trendData.map(item => item.page_views || 0);
+                    
+                    const ctx = document.getElementById('trend-chart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '页面浏览量',
+                                data: visits,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    throw new Error(data.msg);
+                }
+            } catch (error) {
+                console.error('Error loading visit trend:', error);
+            }
+        }
+        
+        // 加载热门页面
+        async function loadTopPages() {
+            try {
+                const response = await fetch(API_BASE + '/stats/pages?limit=10');
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    const pages = data.data;
+                    const pagesHtml = pages.map((page, index) => `
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
+                            <span>${index + 1}. ${page.page}</span>
+                            <span style="color: #666;">${page.view_count} 次访问</span>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('top-pages').innerHTML = pagesHtml;
+                } else {
+                    throw new Error(data.msg);
+                }
+            } catch (error) {
+                console.error('Error loading top pages:', error);
+            }
+        }
+        
+        // 加载用户行为分析
+        async function loadUserBehavior() {
+            try {
+                const response = await fetch(API_BASE + '/stats/behavior');
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    const behavior = data.data;
+                    
+                    // 设备分布图
+                    if (behavior.devices && behavior.devices.length > 0) {
+                        const deviceCtx = document.getElementById('device-chart').getContext('2d');
+                        new Chart(deviceCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: behavior.devices.map(d => d.device),
+                                datasets: [{
+                                    data: behavior.devices.map(d => d.count),
+                                    backgroundColor: [
+                                        '#FF6384',
+                                        '#36A2EB',
+                                        '#FFCE56'
+                                    ]
+                                }]
+                            },
+                            options: {
+                                responsive: true
+                            }
+                        });
+                    }
+                    
+                    // 浏览器分布图
+                    if (behavior.browsers && behavior.browsers.length > 0) {
+                        const browserCtx = document.getElementById('browser-chart').getContext('2d');
+                        new Chart(browserCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: behavior.browsers.map(b => b.browser),
+                                datasets: [{
+                                    label: '访问次数',
+                                    data: behavior.browsers.map(b => b.count),
+                                    backgroundColor: '#36A2EB'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    throw new Error(data.msg);
+                }
+            } catch (error) {
+                console.error('Error loading user behavior:', error);
+            }
+        }
+        
+        // 页面加载完成后加载所有数据
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await Promise.all([
+                    loadVisitStats(),
+                    loadContentStats(),
+                    loadVisitTrend(),
+                    loadTopPages(),
+                    loadUserBehavior()
+                ]);
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                showError('加载统计数据失败: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  webbleen-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://webbleen:password@postgres:5432/webbleen_api?sslmode=disable
+      - RUN_MODE=debug
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=webbleen
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=webbleen_api
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

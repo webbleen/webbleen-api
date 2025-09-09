@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"syscall"
 
 	"github.com/fvbock/endless"
@@ -14,7 +16,15 @@ func main() {
 	endless.DefaultReadTimeOut = setting.ReadTimeout
 	endless.DefaultWriteTimeOut = setting.WriteTimeout
 	endless.DefaultMaxHeaderBytes = 1 << 20
-	endPoint := fmt.Sprintf(":%d", setting.HTTPPort)
+
+	// 优先使用 Railway 的 PORT 环境变量
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = strconv.Itoa(setting.HTTPPort)
+	}
+
+	endPoint := fmt.Sprintf(":%s", port)
+	log.Printf("Starting server on port %s", port)
 
 	server := endless.NewServer(endPoint, routers.InitRouter())
 	server.BeforeBegin = func(add string) {

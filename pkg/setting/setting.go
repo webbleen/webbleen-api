@@ -2,6 +2,7 @@ package setting
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/go-ini/ini"
@@ -18,6 +19,9 @@ var (
 
 	PageSize  int
 	JwtSecret string
+
+	// 数据库配置
+	DatabaseURL string
 )
 
 func init() {
@@ -30,6 +34,7 @@ func init() {
 	LoadBase()
 	LoadServer()
 	LoadApp()
+	LoadDatabase()
 }
 
 func LoadBase() {
@@ -55,4 +60,12 @@ func LoadApp() {
 
 	JwtSecret = sec.Key("JWT_SECRET").MustString("!@)*#)!@U#@*!@!)")
 	PageSize = sec.Key("PAGE_SIZE").MustInt(10)
+}
+
+func LoadDatabase() {
+	// 从环境变量读取数据库连接
+	DatabaseURL = os.Getenv("DATABASE_URL")
+	if DatabaseURL == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
 }

@@ -1,12 +1,44 @@
-FROM golang:latest
+FROM golang:1.16-alpine AS builder
 
-ENV GOPROXY https://goproxy.cn,direct
+WORKDIR /app
 
-WORKDIR $GOPATH/src/github.com/webbleen/go-gin
+# 复制 go mod 文件
+COPY go.mod go.sum ./
 
-COPY . $GOPATH/src/github.com/webbleen/go-gin
+# 下载依赖
+RUN go mod download
 
-RUN go build .
+# 复制源代码
+COPY . .
 
+# 构建应用
+RUN go build -o webbleen-api main.go
+
+# 最终镜像
+FROM alpine:latest
+
+# 安装 ca-certificates 和 tzdata
+RUN apk --no-cache add ca-certificates tzdata
+
+# 创建非root用户
+RUN adduser -D -s /bin/sh appuser
+
+WORKDIR /app
+
+# 复制构建的二进制文件
+COPY --from=builder /app/webbleen-api .
+
+# 复制配置文件
+COPY --from=builder /app/conf ./conf
+
+# 更改文件所有者
+RUN chown -R appuser:appuser /app
+
+# 切换到非root用户
+USER appuser
+
+# 暴露端口（Railway 会动态分配端口，这里使用默认值）
 EXPOSE 8000
-ENTRYPOINT ["./go-gin"]
+
+# 运行应用
+CMD ["./webbleen-api"]
