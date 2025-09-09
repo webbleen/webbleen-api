@@ -32,17 +32,6 @@ func GetVisitStats(c *gin.Context) {
 	uniqueVisitorsToday := models.GetUniqueVisitorsToday()
 	data["unique_visitors_today"] = uniqueVisitorsToday
 
-	// 页面浏览量
-	pageViews := models.GetPageViews()
-	data["page_views"] = pageViews
-
-	// 总页面浏览量
-	var totalPageViews int
-	for _, pv := range pageViews {
-		totalPageViews += pv.ViewCount
-	}
-	data["total_page_views"] = totalPageViews
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
 		"msg":  e.GetMsg(e.SUCCESS),
@@ -78,63 +67,10 @@ func RecordVisit(c *gin.Context) {
 	// 保存访问记录
 	models.AddVisitRecord(&visitRecord)
 
-	// 更新页面访问统计
-	if visitRecord.Page != "" {
-		models.IncrementPageView(visitRecord.Page)
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
 		"msg":  e.GetMsg(e.SUCCESS),
 		"data": make(map[string]interface{}),
-	})
-}
-
-// GetTopPages 获取热门页面
-// @Summary 获取热门页面
-// @Description 获取访问量最高的页面列表
-// @Tags 统计
-// @Accept json
-// @Produce json
-// @Param limit query int false "限制数量" default(10)
-// @Success 200 {object} map[string]interface{} "成功"
-// @Router /stats/pages [get]
-func GetTopPages(c *gin.Context) {
-	limit := 10
-	if l := c.Query("limit"); l != "" {
-		limit = int(c.GetInt("limit"))
-	}
-
-	pages := models.GetTopPages(limit)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": e.SUCCESS,
-		"msg":  e.GetMsg(e.SUCCESS),
-		"data": pages,
-	})
-}
-
-// GetVisitTrend 获取访问趋势
-// @Summary 获取访问趋势
-// @Description 获取指定天数的访问趋势数据
-// @Tags 统计
-// @Accept json
-// @Produce json
-// @Param days query int false "天数" default(30)
-// @Success 200 {object} map[string]interface{} "成功"
-// @Router /stats/trend [get]
-func GetVisitTrend(c *gin.Context) {
-	days := 30
-	if d := c.Query("days"); d != "" {
-		days = int(c.GetInt("days"))
-	}
-
-	trend := models.GetVisitTrend(days)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": e.SUCCESS,
-		"msg":  e.GetMsg(e.SUCCESS),
-		"data": trend,
 	})
 }
 
@@ -153,29 +89,5 @@ func GetUserBehavior(c *gin.Context) {
 		"code": e.SUCCESS,
 		"msg":  e.GetMsg(e.SUCCESS),
 		"data": behavior,
-	})
-}
-
-// GetDailyStats 获取日统计
-// @Summary 获取日统计
-// @Description 获取每日统计数据
-// @Tags 统计
-// @Accept json
-// @Produce json
-// @Param limit query int false "限制天数" default(30)
-// @Success 200 {object} map[string]interface{} "成功"
-// @Router /stats/daily [get]
-func GetDailyStats(c *gin.Context) {
-	limit := 30
-	if l := c.Query("limit"); l != "" {
-		limit = int(c.GetInt("limit"))
-	}
-
-	stats := models.GetDailyStats(limit)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": e.SUCCESS,
-		"msg":  e.GetMsg(e.SUCCESS),
-		"data": stats,
 	})
 }

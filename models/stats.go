@@ -22,25 +22,6 @@ type VisitRecord struct {
 	OS        string    `json:"os" gorm:"size:50"`
 }
 
-// PageView 页面访问统计模型
-type PageView struct {
-	Model
-	Page        string    `json:"page" gorm:"size:200;unique_index"`
-	ViewCount   int       `json:"view_count"`
-	LastView    time.Time `json:"last_view"`
-	UniqueViews int       `json:"unique_views"`
-}
-
-// DailyStats 日访问统计模型
-type DailyStats struct {
-	Model
-	Date           time.Time `json:"date" gorm:"unique_index"`
-	PageViews      int       `json:"page_views"`
-	UniqueVisitors int       `json:"unique_visitors"`
-	BounceRate     float64   `json:"bounce_rate"`
-	AvgTime        int       `json:"avg_time"` // 平均停留时间（秒）
-}
-
 // 访问记录相关方法
 func AddVisitRecord(record *VisitRecord) bool {
 	db.Create(record)
@@ -65,49 +46,6 @@ func GetUniqueVisitorsToday() int {
 	today := time.Now().Format("2006-01-02")
 	db.Model(&VisitRecord{}).Where("DATE(visit_time) = ?", today).Group("ip").Count(&count)
 	return count
-}
-
-func GetPageViews() []PageView {
-	var pageViews []PageView
-	db.Order("view_count DESC").Find(&pageViews)
-	return pageViews
-}
-
-func IncrementPageView(page string) {
-	var pageView PageView
-	if db.Where("page = ?", page).First(&pageView).RecordNotFound() {
-		pageView = PageView{
-			Page:        page,
-			ViewCount:   1,
-			LastView:    time.Now(),
-			UniqueViews: 1,
-		}
-		db.Create(&pageView)
-	} else {
-		db.Model(&pageView).Updates(map[string]interface{}{
-			"view_count": pageView.ViewCount + 1,
-			"last_view":  time.Now(),
-		})
-	}
-}
-
-func GetDailyStats(limit int) []DailyStats {
-	var stats []DailyStats
-	db.Order("date DESC").Limit(limit).Find(&stats)
-	return stats
-}
-
-func GetTopPages(limit int) []PageView {
-	var pages []PageView
-	db.Order("view_count DESC").Limit(limit).Find(&pages)
-	return pages
-}
-
-func GetVisitTrend(days int) []DailyStats {
-	var stats []DailyStats
-	startDate := time.Now().AddDate(0, 0, -days)
-	db.Where("date >= ?", startDate).Order("date ASC").Find(&stats)
-	return stats
 }
 
 // 用户行为分析
@@ -151,16 +89,6 @@ func GetUserBehaviorStats() map[string]interface{} {
 }
 
 func (visitRecord *VisitRecord) BeforeCreate(scope *gorm.Scope) error {
-	scope.SetColumn("CreatedOn", time.Now().Unix())
-	return nil
-}
-
-func (pageView *PageView) BeforeCreate(scope *gorm.Scope) error {
-	scope.SetColumn("CreatedOn", time.Now().Unix())
-	return nil
-}
-
-func (dailyStats *DailyStats) BeforeCreate(scope *gorm.Scope) error {
 	scope.SetColumn("CreatedOn", time.Now().Unix())
 	return nil
 }

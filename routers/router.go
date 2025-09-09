@@ -60,14 +60,8 @@ func InitRouter() *gin.Engine {
 		stats.POST("/visit", api.RecordVisit)
 		// 获取访问统计
 		stats.GET("/visits", api.GetVisitStats)
-		// 获取热门页面
-		stats.GET("/pages", api.GetTopPages)
-		// 获取访问趋势
-		stats.GET("/trend", api.GetVisitTrend)
 		// 获取用户行为分析
 		stats.GET("/behavior", api.GetUserBehavior)
-		// 获取日统计
-		stats.GET("/daily", api.GetDailyStats)
 	}
 
 	return r
