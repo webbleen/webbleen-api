@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -72,14 +73,22 @@ func RecordVisit(c *gin.Context) {
 
 	// 设置服务器端信息
 	// 优先使用前端传递的真实外网IP，其次使用Netlify传递的真实IP，最后使用服务器检测的IP
+	fmt.Printf("DEBUG: Frontend IP: '%s'\n", visitRecord.IP)
+	fmt.Printf("DEBUG: Netlify IP: '%s'\n", c.GetHeader("X-Nf-Client-Connection-Ip"))
+	fmt.Printf("DEBUG: ClientIP: '%s'\n", c.ClientIP())
+
 	if visitRecord.IP == "" {
 		// 尝试从Netlify请求头获取真实IP
 		if netlifyIP := c.GetHeader("X-Nf-Client-Connection-Ip"); netlifyIP != "" {
 			visitRecord.IP = netlifyIP
+			fmt.Printf("DEBUG: Using Netlify IP: %s\n", netlifyIP)
 		} else {
 			// 使用Gin的ClientIP()方法，它会自动检查X-Forwarded-For等标准请求头
 			visitRecord.IP = c.ClientIP()
+			fmt.Printf("DEBUG: Using ClientIP: %s\n", visitRecord.IP)
 		}
+	} else {
+		fmt.Printf("DEBUG: Using frontend IP: %s\n", visitRecord.IP)
 	}
 	visitRecord.UserAgent = c.GetHeader("User-Agent")
 	visitRecord.Referer = c.GetHeader("Referer")
