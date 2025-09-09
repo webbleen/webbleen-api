@@ -39,7 +39,8 @@ func GetTodayVisits(language string) int {
 		// 当没有指定语言时，只统计有语言信息的记录
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
-	query.Count(&count)
+	// 按session_id去重统计
+	query.Group("session_id").Count(&count)
 	return count
 }
 
@@ -52,7 +53,8 @@ func GetTotalVisits(language string) int {
 		// 当没有指定语言时，只统计有语言信息的记录
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
-	query.Count(&count)
+	// 按session_id去重统计
+	query.Group("session_id").Count(&count)
 	return count
 }
 

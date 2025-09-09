@@ -71,7 +71,16 @@ func RecordVisit(c *gin.Context) {
 	}
 
 	// 设置服务器端信息
-	visitRecord.IP = c.ClientIP()
+	// 优先使用前端传递的真实外网IP，其次使用Netlify传递的真实IP，最后使用服务器检测的IP
+	if visitRecord.IP == "" {
+		// 尝试从Netlify请求头获取真实IP
+		if netlifyIP := c.GetHeader("X-Nf-Client-Connection-Ip"); netlifyIP != "" {
+			visitRecord.IP = netlifyIP
+		} else {
+			// 使用Gin的ClientIP()方法，它会自动检查X-Forwarded-For等标准请求头
+			visitRecord.IP = c.ClientIP()
+		}
+	}
 	visitRecord.UserAgent = c.GetHeader("User-Agent")
 	visitRecord.Referer = c.GetHeader("Referer")
 	visitRecord.VisitTime = time.Now()
