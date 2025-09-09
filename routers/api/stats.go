@@ -11,26 +11,35 @@ import (
 
 // GetVisitStats 获取访问统计概览
 // @Summary 获取访问统计概览
-// @Description 获取今日访问量、累计访问量、独立访客等统计信息
+// @Description 获取今日访问量、累计访问量、独立访客等统计信息，支持按语言过滤
 // @Tags 统计
 // @Accept json
 // @Produce json
+// @Param language query string false "语言代码" default("")
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/visits [get]
 func GetVisitStats(c *gin.Context) {
 	data := make(map[string]interface{})
 
+	// 获取语言参数
+	language := c.Query("language")
+
 	// 今日访问量
-	todayVisits := models.GetTodayVisits()
+	todayVisits := models.GetTodayVisits(language)
 	data["today_visits"] = todayVisits
 
 	// 累计访问量
-	totalVisits := models.GetTotalVisits()
+	totalVisits := models.GetTotalVisits(language)
 	data["total_visits"] = totalVisits
 
 	// 今日独立访客
-	uniqueVisitorsToday := models.GetUniqueVisitorsToday()
+	uniqueVisitorsToday := models.GetUniqueVisitorsToday(language)
 	data["unique_visitors_today"] = uniqueVisitorsToday
+
+	// 添加语言信息
+	if language != "" {
+		data["language"] = language
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,

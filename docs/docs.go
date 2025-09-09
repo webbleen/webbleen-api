@@ -85,7 +85,7 @@ const docTemplate = `{
         },
         "/stats/visits": {
             "get": {
-                "description": "获取今日访问量、累计访问量、独立访客等统计信息",
+                "description": "获取今日访问量、累计访问量、独立访客等统计信息，支持按语言过滤",
                 "consumes": [
                     "application/json"
                 ],
@@ -96,6 +96,15 @@ const docTemplate = `{
                     "统计"
                 ],
                 "summary": "获取访问统计概览",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "\"\"",
+                        "description": "语言代码",
+                        "name": "language",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "成功",
@@ -131,6 +140,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ip": {
+                    "type": "string"
+                },
+                "language": {
                     "type": "string"
                 },
                 "modified_on": {

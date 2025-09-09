@@ -20,6 +20,7 @@ type VisitRecord struct {
 	Device    string    `json:"device" gorm:"size:50"`
 	Browser   string    `json:"browser" gorm:"size:50"`
 	OS        string    `json:"os" gorm:"size:50"`
+	Language  string    `json:"language" gorm:"size:10"`
 }
 
 // 访问记录相关方法
@@ -28,23 +29,44 @@ func AddVisitRecord(record *VisitRecord) bool {
 	return true
 }
 
-func GetTodayVisits() int {
+func GetTodayVisits(language string) int {
 	var count int
 	today := time.Now().Format("2006-01-02")
-	db.Model(&VisitRecord{}).Where("DATE(visit_time) = ?", today).Count(&count)
+	query := db.Model(&VisitRecord{}).Where("DATE(visit_time) = ?", today)
+	if language != "" {
+		query = query.Where("language = ?", language)
+	} else {
+		// 当没有指定语言时，只统计有语言信息的记录
+		query = query.Where("language IS NOT NULL AND language != ''")
+	}
+	query.Count(&count)
 	return count
 }
 
-func GetTotalVisits() int {
+func GetTotalVisits(language string) int {
 	var count int
-	db.Model(&VisitRecord{}).Count(&count)
+	query := db.Model(&VisitRecord{})
+	if language != "" {
+		query = query.Where("language = ?", language)
+	} else {
+		// 当没有指定语言时，只统计有语言信息的记录
+		query = query.Where("language IS NOT NULL AND language != ''")
+	}
+	query.Count(&count)
 	return count
 }
 
-func GetUniqueVisitorsToday() int {
+func GetUniqueVisitorsToday(language string) int {
 	var count int
 	today := time.Now().Format("2006-01-02")
-	db.Model(&VisitRecord{}).Where("DATE(visit_time) = ?", today).Group("ip").Count(&count)
+	query := db.Model(&VisitRecord{}).Where("DATE(visit_time) = ?", today)
+	if language != "" {
+		query = query.Where("language = ?", language)
+	} else {
+		// 当没有指定语言时，只统计有语言信息的记录
+		query = query.Where("language IS NOT NULL AND language != ''")
+	}
+	query.Group("ip").Count(&count)
 	return count
 }
 
