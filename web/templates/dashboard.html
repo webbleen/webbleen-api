@@ -359,7 +359,7 @@
                 row.innerHTML = 
                     '<td>' + record.id + '</td>' +
                     '<td>' + (record.ip || '-') + '</td>' +
-                    '<td>' + (record.page || '-') + '</td>' +
+                    '<td>' + safeDecodeURIComponent(record.page) + '</td>' +
                     '<td><span class="language-tag language-' + (record.language || 'unknown') + '">' + (record.language || '未知') + '</span></td>' +
                     '<td><span class="device-tag">' + (record.device || '未知') + '</span></td>' +
                     '<td>' + (record.browser || '-') + '</td>' +
@@ -403,6 +403,17 @@
                 minute: '2-digit',
                 second: '2-digit'
             });
+        }
+        
+        // 安全的 URL 解码函数
+        function safeDecodeURIComponent(str) {
+            if (!str || str === '-') return str;
+            try {
+                return decodeURIComponent(str);
+            } catch (error) {
+                console.warn('Failed to decode URI component:', str, error);
+                return str; // 如果解码失败，返回原始字符串
+            }
         }
         
         // 监听筛选条件变化
