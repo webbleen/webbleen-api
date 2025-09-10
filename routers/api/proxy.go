@@ -175,26 +175,8 @@ func GetFavicon(c *gin.Context) {
 // @Success 200 {object} e.Response{data=GeoResponse}
 // @Router /proxy/geo [get]
 func GetGeoLocation(c *gin.Context) {
-	// 获取客户端IP
-	clientIP := c.ClientIP()
-
-	// 如果是从Docker内部网络获取的IP，尝试从外部API获取真实IP
-	if strings.HasPrefix(clientIP, "192.168.") || strings.HasPrefix(clientIP, "172.") || strings.HasPrefix(clientIP, "10.") || strings.HasPrefix(clientIP, "100.64.") {
-		// 使用ipify.org获取真实公网IP
-		url := "https://api.ipify.org?format=text"
-		client := &http.Client{
-			Timeout: 5 * time.Second,
-		}
-
-		resp, err := client.Get(url)
-		if err == nil {
-			defer resp.Body.Close()
-			body, err := io.ReadAll(resp.Body)
-			if err == nil && len(body) > 0 {
-				clientIP = strings.TrimSpace(string(body))
-			}
-		}
-	}
+	// 获取真实的客户端IP
+	clientIP := getRealClientIP(c)
 
 	// 尝试多个地理位置服务
 	geoServices := []struct {
@@ -294,26 +276,8 @@ func GetGeoLocation(c *gin.Context) {
 // @Success 200 {object} e.Response{data=IPResponse}
 // @Router /proxy/ip [get]
 func GetClientIP(c *gin.Context) {
-	// 尝试从多个来源获取真实IP
-	clientIP := c.ClientIP()
-
-	// 如果是从Docker内部网络获取的IP，尝试从外部API获取真实IP
-	if strings.HasPrefix(clientIP, "192.168.") || strings.HasPrefix(clientIP, "172.") || strings.HasPrefix(clientIP, "10.") {
-		// 使用ipify.org获取真实公网IP
-		url := "https://api.ipify.org?format=text"
-		client := &http.Client{
-			Timeout: 5 * time.Second,
-		}
-
-		resp, err := client.Get(url)
-		if err == nil {
-			defer resp.Body.Close()
-			body, err := io.ReadAll(resp.Body)
-			if err == nil && len(body) > 0 {
-				clientIP = strings.TrimSpace(string(body))
-			}
-		}
-	}
+	// 从多个可能的HTTP头中获取真实客户端IP
+	clientIP := getRealClientIP(c)
 
 	ipResp := IPResponse{
 		IP: clientIP,
@@ -324,6 +288,118 @@ func GetClientIP(c *gin.Context) {
 		"msg":  e.GetMsg(e.SUCCESS),
 		"data": ipResp,
 	})
+}
+
+// getRealClientIP 获取真实的客户端IP地址
+func getRealClientIP(c *gin.Context) string {
+	// 按优先级检查各种可能的IP头
+	headers := []string{
+		"X-Forwarded-For",     // 最常用的代理头
+		"X-Real-IP",           // Nginx代理
+		"X-Client-IP",         // 其他代理
+		"CF-Connecting-IP",    // Cloudflare
+		"True-Client-IP",      // Cloudflare Enterprise
+		"X-Cluster-Client-IP", // 集群
+		"X-Forwarded",         // 其他代理
+		"Forwarded-For",       // RFC 7239
+		"Forwarded",           // RFC 7239
+	}
+
+	for _, header := range headers {
+		ip := c.GetHeader(header)
+		if ip != "" {
+			// X-Forwarded-For 可能包含多个IP，取第一个
+			if strings.Contains(ip, ",") {
+				ips := strings.Split(ip, ",")
+				ip = strings.TrimSpace(ips[0])
+			}
+
+			// 验证IP格式
+			if isValidIP(ip) {
+				return ip
+			}
+		}
+	}
+
+	// 如果所有头都没有，使用Gin的ClientIP方法
+	clientIP := c.ClientIP()
+
+	// 如果获取到的是私有IP，尝试从外部API获取真实IP
+	if isPrivateIP(clientIP) {
+		realIP := getPublicIPFromExternalAPI()
+		if realIP != "" {
+			return realIP
+		}
+	}
+
+	return clientIP
+}
+
+// isPrivateIP 检查是否为私有IP
+func isPrivateIP(ip string) bool {
+	return strings.HasPrefix(ip, "192.168.") ||
+		strings.HasPrefix(ip, "172.") ||
+		strings.HasPrefix(ip, "10.") ||
+		strings.HasPrefix(ip, "100.64.") ||
+		strings.HasPrefix(ip, "127.") ||
+		strings.HasPrefix(ip, "169.254.")
+}
+
+// getPublicIPFromExternalAPI 从外部API获取公网IP
+func getPublicIPFromExternalAPI() string {
+	ipServices := []string{
+		"https://api.ipify.org?format=text",
+		"https://ipv4.icanhazip.com",
+		"https://checkip.amazonaws.com",
+	}
+
+	for _, serviceURL := range ipServices {
+		client := &http.Client{
+			Timeout: 5 * time.Second,
+		}
+
+		resp, err := client.Get(serviceURL)
+		if err == nil {
+			defer resp.Body.Close()
+			body, err := io.ReadAll(resp.Body)
+			if err == nil && len(body) > 0 {
+				ip := strings.TrimSpace(string(body))
+				// 验证获取到的IP是否为有效的公网IP
+				if isValidIP(ip) && !isPrivateIP(ip) {
+					return ip
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// isValidIP 验证IP地址格式
+func isValidIP(ip string) bool {
+	// 简单的IP格式验证
+	parts := strings.Split(ip, ".")
+	if len(parts) != 4 {
+		return false
+	}
+
+	for _, part := range parts {
+		if part == "" {
+			return false
+		}
+		// 检查是否为数字
+		for _, char := range part {
+			if char < '0' || char > '9' {
+				return false
+			}
+		}
+		// 检查范围
+		if len(part) > 3 {
+			return false
+		}
+	}
+
+	return true
 }
 
 // 辅助函数：从map中安全获取字符串值
