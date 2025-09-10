@@ -11,7 +11,7 @@ const docTemplate = `{
         "title": "{{.Title}}",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
-            "name": "Webbleen",
+            "name": "webbleen",
             "url": "https://webbleen.com",
             "email": "contact@webbleen.com"
         },
@@ -267,8 +267,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "api.webbleen.com",
 	BasePath:         "/",
 	Schemes:          []string{"https"},
-	Title:            "Webbleen 博客 API 服务",
-	Description:      "Webbleen 博客 API 服务，提供统计、内容管理等功能",
+	Title:            "webbleen 博客 API 服务",
+	Description:      "webbleen 博客 API 服务，提供统计、内容管理等功能",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

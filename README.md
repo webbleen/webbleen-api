@@ -1,6 +1,6 @@
-# Webbleen 博客 API 服务
+# webbleen 博客 API 服务
 
-这是一个为 Webbleen 博客网站设计的 API 服务，提供统计、内容管理等功能。
+这是一个为 webbleen 博客网站设计的 API 服务，提供统计、内容管理等功能。
 
 ## 系统要求
 

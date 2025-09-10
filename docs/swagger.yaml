@@ -35,14 +35,14 @@ host: api.webbleen.com
 info:
   contact:
     email: contact@webbleen.com
-    name: Webbleen
+    name: webbleen
     url: https://webbleen.com
-  description: Webbleen 博客 API 服务，提供统计、内容管理等功能
+  description: webbleen 博客 API 服务，提供统计、内容管理等功能
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   termsOfService: http://swagger.io/terms/
-  title: Webbleen 博客 API 服务
+  title: webbleen 博客 API 服务
   version: "1.0"
 paths:
   /dashboard:

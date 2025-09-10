@@ -2,7 +2,7 @@
 
 ## 📖 概述
 
-Webbleen 博客 API 服务提供了完整的 Swagger 文档，方便开发者查看和测试 API 接口。
+webbleen 博客 API 服务提供了完整的 Swagger 文档，方便开发者查看和测试 API 接口。
 
 ## 🔗 访问地址
 
@@ -59,9 +59,9 @@ swag init
 Swagger 配置在 `main.go` 中定义：
 
 ```go
-// @title Webbleen 博客 API 服务
+// @title webbleen 博客 API 服务
 // @version 1.0
-// @description Webbleen 博客 API 服务，提供统计、内容管理等功能
+// @description webbleen 博客 API 服务，提供统计、内容管理等功能
 // @host api.webbleen.com
 // @BasePath /
 // @schemes https
