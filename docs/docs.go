@@ -24,6 +24,29 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/dashboard": {
+            "get": {
+                "description": "显示访问记录管理界面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "显示 Dashboard 页面",
+                "responses": {
+                    "200": {
+                        "description": "HTML页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/stats/behavior": {
             "get": {
                 "description": "获取设备、浏览器、操作系统、地理位置等用户行为统计",
@@ -37,6 +60,76 @@ const docTemplate = `{
                     "统计"
                 ],
                 "summary": "获取用户行为分析",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/overview": {
+            "get": {
+                "description": "获取今日访问量、累计访问量、独立访客等统计信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "获取访问统计概览",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/records": {
+            "get": {
+                "description": "分页获取访问记录，支持按语言过滤",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "获取访问记录列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "语言过滤",
+                        "name": "language",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "成功",
@@ -68,7 +161,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.VisitRecord"
+                            "$ref": "#/definitions/database.VisitRecord"
                         }
                     }
                 ],
@@ -118,7 +211,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.VisitRecord": {
+        "database.VisitRecord": {
             "type": "object",
             "properties": {
                 "browser": {

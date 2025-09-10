@@ -1,4 +1,4 @@
-package models
+package database
 
 import (
 	"log"
@@ -34,6 +34,10 @@ func init() {
 
 	// 自动迁移统计相关表
 	db.AutoMigrate(&VisitRecord{})
+}
+
+func GetDB() *gorm.DB {
+	return db
 }
 
 func CloseDB() {

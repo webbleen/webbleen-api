@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  models.VisitRecord:
+  database.VisitRecord:
     properties:
       browser:
         type: string
@@ -45,6 +45,21 @@ info:
   title: Webbleen 博客 API 服务
   version: "1.0"
 paths:
+  /dashboard:
+    get:
+      consumes:
+      - text/html
+      description: 显示访问记录管理界面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML页面
+          schema:
+            type: string
+      summary: 显示 Dashboard 页面
+      tags:
+      - Dashboard
   /stats/behavior:
     get:
       consumes:
@@ -61,6 +76,53 @@ paths:
       summary: 获取用户行为分析
       tags:
       - 统计
+  /stats/overview:
+    get:
+      consumes:
+      - application/json
+      description: 获取今日访问量、累计访问量、独立访客等统计信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取访问统计概览
+      tags:
+      - Dashboard
+  /stats/records:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取访问记录，支持按语言过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 语言过滤
+        in: query
+        name: language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取访问记录列表
+      tags:
+      - Dashboard
   /stats/visit:
     post:
       consumes:
@@ -72,7 +134,7 @@ paths:
         name: visitRecord
         required: true
         schema:
-          $ref: '#/definitions/models.VisitRecord'
+          $ref: '#/definitions/database.VisitRecord'
       produces:
       - application/json
       responses:

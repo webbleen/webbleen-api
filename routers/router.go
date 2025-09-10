@@ -16,6 +16,12 @@ import (
 func InitRouter() *gin.Engine {
 	r := gin.New()
 
+	// 配置模板引擎
+	r.LoadHTMLGlob("web/templates/*")
+
+	// 配置静态文件服务
+	r.Static("/static", "./web/static")
+
 	// Cors設定
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
@@ -62,7 +68,13 @@ func InitRouter() *gin.Engine {
 		stats.GET("/visits", api.GetVisitStats)
 		// 获取用户行为分析
 		stats.GET("/behavior", api.GetUserBehavior)
+		// Dashboard API
+		stats.GET("/records", api.GetVisitRecords)
+		stats.GET("/overview", api.GetVisitOverview)
 	}
+
+	// Dashboard 页面
+	r.GET("/dashboard", api.DashboardPage)
 
 	return r
 }

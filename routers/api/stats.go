@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/webbleen/go-gin/models"
+	"github.com/webbleen/go-gin/models/database"
 	"github.com/webbleen/go-gin/pkg/e"
 )
 
@@ -24,15 +24,15 @@ func GetVisitStats(c *gin.Context) {
 	language := c.Query("language")
 
 	// 今日访问量
-	todayVisits := models.GetTodayVisits(language)
+	todayVisits := database.GetTodayVisits(language)
 	data["today_visits"] = todayVisits
 
 	// 累计访问量
-	totalVisits := models.GetTotalVisits(language)
+	totalVisits := database.GetTotalVisits(language)
 	data["total_visits"] = totalVisits
 
 	// 今日独立访客
-	uniqueVisitorsToday := models.GetUniqueVisitorsToday(language)
+	uniqueVisitorsToday := database.GetUniqueVisitorsToday(language)
 	data["unique_visitors_today"] = uniqueVisitorsToday
 
 	// 添加语言信息
@@ -53,11 +53,11 @@ func GetVisitStats(c *gin.Context) {
 // @Tags 统计
 // @Accept json
 // @Produce json
-// @Param visitRecord body models.VisitRecord true "访问记录"
+// @Param visitRecord body database.VisitRecord true "访问记录"
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/visit [post]
 func RecordVisit(c *gin.Context) {
-	var visitRecord models.VisitRecord
+	var visitRecord database.VisitRecord
 
 	// 从 JSON 请求体中获取访问信息
 	if err := c.ShouldBindJSON(&visitRecord); err != nil {
@@ -84,7 +84,7 @@ func RecordVisit(c *gin.Context) {
 	visitRecord.Referer = c.GetHeader("Referer")
 
 	// 保存访问记录
-	models.AddVisitRecord(&visitRecord)
+	database.AddVisitRecord(&visitRecord)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
@@ -102,7 +102,7 @@ func RecordVisit(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/behavior [get]
 func GetUserBehavior(c *gin.Context) {
-	behavior := models.GetUserBehaviorStats()
+	behavior := database.GetUserBehaviorStats()
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
