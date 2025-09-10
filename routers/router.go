@@ -73,6 +73,19 @@ func InitRouter() *gin.Engine {
 		stats.GET("/overview", api.GetVisitOverview)
 	}
 
+	// 代理服务API - 不需要认证
+	proxy := r.Group("/proxy")
+	{
+		// 必应壁纸
+		proxy.GET("/bing", api.GetBingWallpaper)
+		// 网站图标
+		proxy.GET("/favicon", api.GetFavicon)
+		// 地理位置
+		proxy.GET("/geo", api.GetGeoLocation)
+		// IP地址
+		proxy.GET("/ip", api.GetClientIP)
+	}
+
 	// Dashboard 页面
 	r.GET("/dashboard", api.DashboardPage)
 
