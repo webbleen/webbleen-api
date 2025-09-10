@@ -1,6 +1,7 @@
 package database
 
 import (
+	"net/url"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -25,8 +26,60 @@ type VisitRecord struct {
 
 // 访问记录相关方法
 func AddVisitRecord(record *VisitRecord) bool {
+	// 在存储前解析URL，将编码的路径转换为可读格式
+	record.Page = ParseURL(record.Page)
 	db.Create(record)
 	return true
+}
+
+// CheckVisitExists 检查今日是否已记录过该页面的访问
+func CheckVisitExists(sessionID, page string) bool {
+	today := time.Now().Format("2006-01-02")
+	// 解析URL，确保比较的是解析后的格式
+	parsedPage := ParseURL(page)
+	var count int64
+	db.Model(&VisitRecord{}).
+		Where("session_id = ? AND page = ? AND DATE(created_on) = ?", sessionID, parsedPage, today).
+		Count(&count)
+	return count > 0
+}
+
+// ParseURL 解析URL，将编码的路径转换为可读格式
+func ParseURL(rawURL string) string {
+	// 如果URL为空或只是斜杠，返回原值
+	if rawURL == "" || rawURL == "/" {
+		return rawURL
+	}
+
+	// 尝试解析URL
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		// 如果解析失败，尝试直接解码路径部分
+		decoded, decodeErr := url.QueryUnescape(rawURL)
+		if decodeErr != nil {
+			// 如果解码也失败，返回原值
+			return rawURL
+		}
+		return decoded
+	}
+
+	// 解码路径部分
+	decodedPath, err := url.QueryUnescape(parsedURL.Path)
+	if err != nil {
+		// 如果解码失败，返回原路径
+		return parsedURL.Path
+	}
+
+	// 如果URL有查询参数，保留它们
+	if parsedURL.RawQuery != "" {
+		decodedQuery, err := url.QueryUnescape(parsedURL.RawQuery)
+		if err == nil {
+			return decodedPath + "?" + decodedQuery
+		}
+		return decodedPath + "?" + parsedURL.RawQuery
+	}
+
+	return decodedPath
 }
 
 func GetTodayVisits(language string) int {
@@ -39,8 +92,8 @@ func GetTodayVisits(language string) int {
 		// 当没有指定语言时，只统计有语言信息的记录
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
-	// 按session_id去重统计
-	query.Group("session_id").Count(&count)
+	// 统计所有页面访问（不按session_id去重，每个页面访问都算一次）
+	query.Count(&count)
 	return count
 }
 
@@ -53,8 +106,8 @@ func GetTotalVisits(language string) int {
 		// 当没有指定语言时，只统计有语言信息的记录
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
-	// 按session_id去重统计
-	query.Group("session_id").Count(&count)
+	// 统计所有页面访问（不按session_id去重，每个页面访问都算一次）
+	query.Count(&count)
 	return count
 }
 
@@ -69,6 +122,35 @@ func GetUniqueVisitorsToday(language string) int {
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
 	query.Group("ip").Count(&count)
+	return count
+}
+
+// GetTodayUniqueSessions 获取今日独立会话数（按session_id去重）
+func GetTodayUniqueSessions(language string) int {
+	var count int
+	today := time.Now().Format("2006-01-02")
+	query := db.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
+	if language != "" {
+		query = query.Where("language = ?", language)
+	} else {
+		// 当没有指定语言时，只统计有语言信息的记录
+		query = query.Where("language IS NOT NULL AND language != ''")
+	}
+	query.Group("session_id").Count(&count)
+	return count
+}
+
+// GetTotalUniqueSessions 获取总独立会话数（按session_id去重）
+func GetTotalUniqueSessions(language string) int {
+	var count int
+	query := db.Model(&VisitRecord{})
+	if language != "" {
+		query = query.Where("language = ?", language)
+	} else {
+		// 当没有指定语言时，只统计有语言信息的记录
+		query = query.Where("language IS NOT NULL AND language != ''")
+	}
+	query.Group("session_id").Count(&count)
 	return count
 }
 
@@ -177,6 +259,12 @@ func GetVisitOverview() (*response.VisitOverviewResult, error) {
 	// 今日独立访客
 	uniqueVisitorsToday := GetUniqueVisitorsToday("")
 
+	// 今日独立会话数
+	todayUniqueSessions := GetTodayUniqueSessions("")
+
+	// 总独立会话数
+	totalUniqueSessions := GetTotalUniqueSessions("")
+
 	// 按语言统计
 	languageStats := make(map[string]int64)
 	var languages []string
@@ -223,6 +311,8 @@ func GetVisitOverview() (*response.VisitOverviewResult, error) {
 		TodayVisits:         todayVisits,
 		TotalVisits:         totalVisits,
 		UniqueVisitorsToday: uniqueVisitorsToday,
+		TodayUniqueSessions: todayUniqueSessions,
+		TotalUniqueSessions: totalUniqueSessions,
 		LanguageStats:       languageStats,
 		DeviceStats:         deviceStats,
 		CountryStats:        countryStats,
@@ -230,6 +320,8 @@ func GetVisitOverview() (*response.VisitOverviewResult, error) {
 }
 
 func (visitRecord *VisitRecord) BeforeCreate(scope *gorm.Scope) error {
-	scope.SetColumn("CreatedOn", time.Now().Unix())
+	now := time.Now()
+	scope.SetColumn("CreatedOn", now)
+	scope.SetColumn("ModifiedOn", now)
 	return nil
 }

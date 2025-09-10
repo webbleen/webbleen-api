@@ -34,9 +34,11 @@ type VisitRecord struct {
 
 // 访问统计概览结果
 type VisitOverviewResult struct {
-	TodayVisits         int              `json:"today_visits"`
-	TotalVisits         int              `json:"total_visits"`
-	UniqueVisitorsToday int              `json:"unique_visitors_today"`
+	TodayVisits         int              `json:"today_visits"`          // 今日页面访问数（每个页面都算）
+	TotalVisits         int              `json:"total_visits"`          // 总页面访问数（每个页面都算）
+	UniqueVisitorsToday int              `json:"unique_visitors_today"` // 今日独立访客数（按IP去重）
+	TodayUniqueSessions int              `json:"today_unique_sessions"` // 今日独立会话数（按session_id去重）
+	TotalUniqueSessions int              `json:"total_unique_sessions"` // 总独立会话数（按session_id去重）
 	LanguageStats       map[string]int64 `json:"language_stats"`
 	DeviceStats         map[string]int64 `json:"device_stats"`
 	CountryStats        map[string]int64 `json:"country_stats"`

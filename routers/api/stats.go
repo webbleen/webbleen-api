@@ -35,6 +35,14 @@ func GetVisitStats(c *gin.Context) {
 	uniqueVisitorsToday := database.GetUniqueVisitorsToday(language)
 	data["unique_visitors_today"] = uniqueVisitorsToday
 
+	// 今日独立会话数
+	todayUniqueSessions := database.GetTodayUniqueSessions(language)
+	data["today_unique_sessions"] = todayUniqueSessions
+
+	// 总独立会话数
+	totalUniqueSessions := database.GetTotalUniqueSessions(language)
+	data["total_unique_sessions"] = totalUniqueSessions
+
 	// 添加语言信息
 	if language != "" {
 		data["language"] = language
@@ -69,6 +77,19 @@ func RecordVisit(c *gin.Context) {
 		return
 	}
 
+	// 检查今日是否已记录过该页面的访问
+	if database.CheckVisitExists(visitRecord.SessionID, visitRecord.Page) {
+		c.JSON(http.StatusOK, gin.H{
+			"code": e.SUCCESS,
+			"msg":  "Visit already recorded today",
+			"data": map[string]interface{}{
+				"recorded": false,
+				"reason":   "already_exists",
+			},
+		})
+		return
+	}
+
 	// 设置服务器端信息
 	// 优先使用前端传递的真实外网IP，其次使用Netlify传递的真实IP，最后使用服务器检测的IP
 	if visitRecord.IP == "" {
@@ -89,7 +110,10 @@ func RecordVisit(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
 		"msg":  e.GetMsg(e.SUCCESS),
-		"data": make(map[string]interface{}),
+		"data": map[string]interface{}{
+			"recorded": true,
+			"reason":   "new_visit",
+		},
 	})
 }
 
