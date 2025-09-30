@@ -48,8 +48,17 @@ type IPResponse struct {
 // @Success 200 {object} e.Response{data=BingResponse}
 // @Router /proxy/bing [get]
 func GetBingWallpaper(c *gin.Context) {
-	// 必应壁纸API
-	url := "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN"
+    // 必应壁纸API
+    url := "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN"
+
+    if cached, ok := proxyCache.get("bing"); ok {
+        c.JSON(http.StatusOK, gin.H{
+            "code": e.SUCCESS,
+            "msg":  e.GetMsg(e.SUCCESS),
+            "data": cached,
+        })
+        return
+    }
 
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -76,7 +85,7 @@ func GetBingWallpaper(c *gin.Context) {
 		return
 	}
 
-	var bingResp BingResponse
+    var bingResp BingResponse
 	if err := json.Unmarshal(body, &bingResp); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": e.ERROR,
@@ -95,7 +104,10 @@ func GetBingWallpaper(c *gin.Context) {
 		bingResp.Images[0] = image
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+    // 缓存 30 分钟
+    proxyCache.set("bing", bingResp, 30*time.Minute)
+
+    c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,
 		"msg":  e.GetMsg(e.SUCCESS),
 		"data": bingResp,
@@ -129,7 +141,16 @@ func GetFavicon(c *gin.Context) {
 		fmt.Sprintf("https://favicons.githubusercontent.com/%s", url),
 	}
 
-	var faviconURL string
+    if cached, ok := proxyCache.get("favicon:" + url); ok {
+        c.JSON(http.StatusOK, gin.H{
+            "code": e.SUCCESS,
+            "msg":  e.GetMsg(e.SUCCESS),
+            "data": cached,
+        })
+        return
+    }
+
+    var faviconURL string
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -155,9 +176,12 @@ func GetFavicon(c *gin.Context) {
 		return
 	}
 
-	faviconResp := FaviconResponse{
+    faviconResp := FaviconResponse{
 		URL: faviconURL,
 	}
+
+    // 缓存 24 小时
+    proxyCache.set("favicon:"+url, faviconResp, 24*time.Hour)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": e.SUCCESS,

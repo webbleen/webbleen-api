@@ -22,42 +22,28 @@ func InitRouter() *gin.Engine {
 	// 配置静态文件服务
 	r.Static("/static", "./web/static")
 
-	// Cors設定
-	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://127.0.0.1:8080",
-			"http://192.168.0.7:8080",
-			"http://localhost:1313",
-			"https://webbleen.com",
-			"https://www.webbleen.com",
-			"https://webbleen.github.io",
-		},
-		AllowMethods: []string{
-			"GET",
-			"POST",
-			"PUT",
-			"DELETE",
-			"OPTIONS",
-		},
-		AllowHeaders: []string{
-			"Access-Control-Allow-Credentials",
-			"Access-Control-Allow-Headers",
-			"Content-Type",
-			"Content-Length",
-			"Accept-Encoding",
-			"Authorization",
-		},
-		AllowCredentials: true,
-		MaxAge:           24 * time.Hour,
-	}))
+    // CORS 設定（可配置）
+    r.Use(cors.New(cors.Config{
+        AllowOrigins:     setting.CORSAllowedOrigins,
+        AllowMethods:     setting.CORSAllowedMethods,
+        AllowHeaders:     setting.CORSAllowedHeaders,
+        AllowCredentials: setting.CORSCredentials,
+        MaxAge:           24 * time.Hour,
+    }))
 
-	r.Use(gin.Logger())
+    r.Use(gin.Logger())
+    r.Use(api.MetricsMiddleware())
 
 	r.Use(gin.Recovery())
 
 	gin.SetMode(setting.RunMode)
 
 	r.GET("/swagger/*any", ginswagger.WrapHandler(swaggerFiles.Handler))
+    r.GET("/metrics", api.PrometheusHandler)
+
+    // 健康与就绪检查
+    r.GET("/healthz", api.Healthz)
+    r.GET("/readyz", api.Readyz)
 
 	// 统计相关API - 不需要认证
 	stats := r.Group("/stats")
@@ -71,6 +57,8 @@ func InitRouter() *gin.Engine {
 		// Dashboard API
 		stats.GET("/records", api.GetVisitRecords)
 		stats.GET("/overview", api.GetVisitOverview)
+		// 导出 CSV
+		stats.GET("/export", api.ExportVisitRecords)
 	}
 
 	// 代理服务API - 不需要认证
