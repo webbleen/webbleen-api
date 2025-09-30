@@ -76,3 +76,34 @@ type LocationStat struct {
 	City    string `json:"city"`
 	Count   int    `json:"count"`
 }
+
+// 热门页面统计
+type PageStat struct {
+    Page  string `json:"page"`
+    Count int    `json:"count"`
+}
+
+// 趋势点（按天聚合）
+type TrendPoint struct {
+    Date            string `json:"date"`
+    Visits          int    `json:"visits"`
+    UniqueVisitors  int    `json:"unique_visitors"`
+    UniqueSessions  int    `json:"unique_sessions"`
+}
+
+type TrendResult struct {
+    Points []TrendPoint `json:"points"`
+}
+
+// 日统计（与趋势结构一致）
+type DailyResult struct {
+    Points []TrendPoint `json:"points"`
+}
+
+// 内容统计响应
+type ContentStatsResponse struct {
+    TotalArticles   int    `json:"total_articles"`
+    TotalTags       int    `json:"total_tags"`
+    TotalCategories int    `json:"total_categories"`
+    LastUpdate      string `json:"last_update"`
+}

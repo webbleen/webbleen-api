@@ -24,6 +24,15 @@ type VisitRecord struct {
 	Language  string `json:"language" gorm:"size:10"`
 }
 
+// ContentStats 内容统计表
+type ContentStats struct {
+    Model
+    TotalArticles   int       `json:"total_articles"`
+    TotalTags       int       `json:"total_tags"`
+    TotalCategories int       `json:"total_categories"`
+    LastUpdate      time.Time `json:"last_update"`
+}
+
 // 访问记录相关方法
 func AddVisitRecord(record *VisitRecord) bool {
 	// 在存储前解析URL，将编码的路径转换为可读格式
@@ -180,6 +189,157 @@ func GetUserBehaviorStats() *response.UserBehaviorResult {
 	}
 }
 
+// 热门页面统计（可限制数量）
+func GetTopPages(limit int, startDate, endDate string, language string) ([]response.PageStat, error) {
+    if limit <= 0 || limit > 100 {
+        limit = 10
+    }
+
+    query := db.Model(&VisitRecord{})
+    if startDate != "" {
+        query = query.Where("DATE(created_on) >= ?", startDate)
+    }
+    if endDate != "" {
+        query = query.Where("DATE(created_on) <= ?", endDate)
+    }
+    if language != "" {
+        query = query.Where("language = ?", language)
+    }
+
+    type row struct {
+        Page  string
+        Count int
+    }
+    var rows []row
+    err := query.Select("page, count(*) as count").
+        Group("page").
+        Order("count DESC").
+        Limit(limit).
+        Scan(&rows).Error
+    if err != nil {
+        return nil, err
+    }
+
+    stats := make([]response.PageStat, 0, len(rows))
+    for _, r := range rows {
+        stats = append(stats, response.PageStat{Page: r.Page, Count: r.Count})
+    }
+    return stats, nil
+}
+
+// 趋势/日统计（按天聚合）
+func GetTrend(days int, language string) (*response.TrendResult, error) {
+    if days <= 0 || days > 365 {
+        days = 30
+    }
+    // 计算起始日期（含当天）
+    start := time.Now().AddDate(0, 0, -days+1).Format("2006-01-02")
+
+    type row struct {
+        Date  string
+        Count int
+    }
+
+    // 访问量（不去重）
+    query := db.Model(&VisitRecord{}).Where("DATE(created_on) >= ?", start)
+    if language != "" {
+        query = query.Where("language = ?", language)
+    }
+    var visitRows []row
+    err := query.Select("DATE(created_on) as date, COUNT(*) as count").
+        Group("DATE(created_on)").
+        Order("date").
+        Scan(&visitRows).Error
+    if err != nil {
+        return nil, err
+    }
+
+    // 独立访客（按 IP 去重）
+    var uvRows []row
+    err = db.Model(&VisitRecord{}).
+        Where("DATE(created_on) >= ?", start).
+        Scopes(withLanguage(language)).
+        Select("DATE(created_on) as date, COUNT(DISTINCT ip) as count").
+        Group("DATE(created_on)").
+        Order("date").
+        Scan(&uvRows).Error
+    if err != nil {
+        return nil, err
+    }
+
+    // 独立会话（按 session_id 去重）
+    var usRows []row
+    err = db.Model(&VisitRecord{}).
+        Where("DATE(created_on) >= ?", start).
+        Scopes(withLanguage(language)).
+        Select("DATE(created_on) as date, COUNT(DISTINCT session_id) as count").
+        Group("DATE(created_on)").
+        Order("date").
+        Scan(&usRows).Error
+    if err != nil {
+        return nil, err
+    }
+
+    // 合并到完整连续的日期序列
+    visitMap := make(map[string]int)
+    for _, r := range visitRows { visitMap[r.Date] = r.Count }
+    uvMap := make(map[string]int)
+    for _, r := range uvRows { uvMap[r.Date] = r.Count }
+    usMap := make(map[string]int)
+    for _, r := range usRows { usMap[r.Date] = r.Count }
+
+    points := make([]response.TrendPoint, 0, days)
+    startTime, _ := time.Parse("2006-01-02", start)
+    for i := 0; i < days; i++ {
+        d := startTime.AddDate(0, 0, i).Format("2006-01-02")
+        points = append(points, response.TrendPoint{
+            Date:           d,
+            Visits:         visitMap[d],
+            UniqueVisitors: uvMap[d],
+            UniqueSessions: usMap[d],
+        })
+    }
+    return &response.TrendResult{Points: points}, nil
+}
+
+func withLanguage(language string) func(*gorm.DB) *gorm.DB {
+    return func(tx *gorm.DB) *gorm.DB {
+        if language != "" {
+            return tx.Where("language = ?", language)
+        }
+        return tx
+    }
+}
+
+// 内容统计读
+func GetContentStats() (*response.ContentStatsResponse, error) {
+    var cs ContentStats
+    // 仅取最新一条
+    err := db.Order("modified_on DESC").First(&cs).Error
+    if err != nil && !gorm.IsRecordNotFoundError(err) {
+        return nil, err
+    }
+    res := &response.ContentStatsResponse{
+        TotalArticles:   cs.TotalArticles,
+        TotalTags:       cs.TotalTags,
+        TotalCategories: cs.TotalCategories,
+    }
+    if !cs.ModifiedOn.IsZero() {
+        res.LastUpdate = cs.ModifiedOn.Format("2006-01-02 15:04:05")
+    }
+    return res, nil
+}
+
+// 内容统计写（新增一条快照）
+func UpdateContentStats(articles, tags, categories int) error {
+    cs := ContentStats{
+        TotalArticles:   articles,
+        TotalTags:       tags,
+        TotalCategories: categories,
+        LastUpdate:      time.Now(),
+    }
+    return db.Create(&cs).Error
+}
 // 分页获取访问记录
 func GetVisitRecords(page, pageSize int, language string) (*response.VisitRecordsResult, error) {
 	// 限制每页最大数量

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+    "strconv"
 
 	ginswagger "github.com/swaggo/gin-swagger"
 	swaggerFiles "github.com/swaggo/gin-swagger/swaggerFiles"
@@ -54,6 +55,14 @@ func InitRouter() *gin.Engine {
 		stats.GET("/visits", api.GetVisitStats)
 		// 获取用户行为分析
 		stats.GET("/behavior", api.GetUserBehavior)
+        // 获取热门页面
+        stats.GET("/pages", api.GetTopPages)
+        // 获取访问趋势 & 日统计
+        stats.GET("/trend", api.GetTrend)
+        stats.GET("/daily", api.GetDaily)
+        // 内容统计读写
+        stats.GET("/content", api.GetContentStats)
+        stats.POST("/content", api.UpdateContentStats)
 		// Dashboard API
 		stats.GET("/records", api.GetVisitRecords)
 		stats.GET("/overview", api.GetVisitOverview)
