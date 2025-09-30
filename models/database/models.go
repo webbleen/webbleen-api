@@ -33,7 +33,8 @@ func init() {
 	db.DB().SetMaxOpenConns(100)
 
 	// 自动迁移统计相关表
-	db.AutoMigrate(&VisitRecord{})
+    db.AutoMigrate(&VisitRecord{})
+    db.AutoMigrate(&ContentStats{})
 }
 
 func GetDB() *gorm.DB {
