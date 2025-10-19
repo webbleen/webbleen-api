@@ -15,6 +15,13 @@ import (
 )
 
 func InitRouter() *gin.Engine {
+	// 初始化数据库
+	if err := database.InitDatabase(); err != nil {
+		// 如果数据库初始化失败，记录错误但不中断服务
+		// 在实际生产环境中，应该处理这个错误
+		log.Printf("数据库初始化失败: %v", err)
+	}
+
 	r := gin.New()
 
 	// 配置模板引擎
@@ -88,13 +95,6 @@ func InitRouter() *gin.Engine {
 
 	// Dashboard 页面
 	r.GET("/dashboard", api.DashboardPage)
-
-	// 初始化数据库
-	if err := database.InitDatabase(); err != nil {
-		// 如果数据库初始化失败，记录错误但不中断服务
-		// 在实际生产环境中，应该处理这个错误
-		log.Printf("数据库初始化失败: %v", err)
-	}
 
 	return r
 }
