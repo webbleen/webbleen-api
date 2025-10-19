@@ -25,7 +25,8 @@ func InitDatabase() error {
 		return fmt.Errorf("DATABASE_URL environment variable is required")
 	}
 
-	DB, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{
+	var err error
+	DB, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // 保持表名单数形式

@@ -54,8 +54,7 @@ WORKDIR /app
 # 复制构建的二进制文件
 COPY --from=builder /app/webbleen-api .
 
-# 复制配置文件和模板文件
-COPY --from=builder /app/conf ./conf
+# 复制模板文件
 COPY --from=builder /app/web ./web
 
 # 更改文件所有者
