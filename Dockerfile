@@ -1,27 +1,53 @@
-FROM golang:1.24-alpine AS builder
+FROM node:20-bullseye-slim AS builder
 
+# 设置工作目录
 WORKDIR /app
+
+# 更新包列表并安装必要的工具
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    ca-certificates \
+    tzdata \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 Go 1.24.0 (支持最新依赖)
+RUN wget -O go1.24.0.linux-amd64.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz \
+    && rm go1.24.0.linux-amd64.tar.gz
+
+# 设置 Go 环境变量
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOPATH="/go"
+ENV GOCACHE="/go/cache"
+
+# 创建 Go 工作目录
+RUN mkdir -p /go/src /go/bin /go/cache
 
 # 复制 go mod 文件
 COPY go.mod go.sum ./
 
 # 下载依赖
-RUN go mod download
+RUN /usr/local/go/bin/go mod download
 
 # 复制源代码
 COPY . .
 
-# 构建应用
-RUN go build -o webbleen-api main.go
+# 整理依赖并构建应用
+RUN /usr/local/go/bin/go mod tidy && /usr/local/go/bin/go build -o webbleen-api main.go
 
 # 最终镜像
-FROM alpine:latest
+FROM node:20-bullseye-slim
 
-# 安装 ca-certificates 和 tzdata
-RUN apk --no-cache add ca-certificates tzdata
+# 更新包列表并安装运行时依赖
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
 # 创建非root用户
-RUN adduser -D -s /bin/sh appuser
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 

@@ -3,127 +3,155 @@ package setting
 import (
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
-
-	"github.com/go-ini/ini"
 )
 
 var (
-	Cfg *ini.File
-
-	RunMode string
-
+	// 服务器配置
+	RunMode      string
 	HTTPPort     int
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 
+	// 应用配置
 	PageSize  int
 	JwtSecret string
 
 	// 数据库配置
 	DatabaseURL string
 
-    // CORS 配置
-    CORSAllowedOrigins []string
-    CORSAllowedMethods []string
-    CORSAllowedHeaders []string
-    CORSCredentials    bool
+	// CORS 配置
+	CORSAllowedOrigins []string
+	CORSAllowedMethods []string
+	CORSAllowedHeaders []string
+	CORSCredentials    bool
 )
 
 func init() {
-	var err error
-	Cfg, err = ini.Load("conf/app.ini")
-	if err != nil {
-		log.Fatalf("Fail to parse 'conf/app.ini': %v", err)
-	}
+	LoadAll()
+}
 
-	LoadBase()
+// LoadAll 加载所有配置
+func LoadAll() {
 	LoadServer()
 	LoadApp()
 	LoadDatabase()
-    LoadCORS()
+	LoadCORS()
 }
 
-func LoadBase() {
-	RunMode = Cfg.Section("").Key("RUN_MODE").MustString("debug")
-}
-
+// LoadServer 加载服务器配置
 func LoadServer() {
-	sec, err := Cfg.GetSection("server")
-	if err != nil {
-		log.Fatalf("Fail to get section 'server': %v", err)
-	}
+	// 运行模式
+	RunMode = getEnv("GIN_MODE", "debug")
 
-	HTTPPort = sec.Key("HTTP_PORT").MustInt(8000)
-	ReadTimeout = time.Duration(sec.Key("READ_TIMEOUT").MustInt(60)) * time.Second
-	WriteTimeout = time.Duration(sec.Key("WRITE_TIMEOUT").MustInt(60)) * time.Second
+	// 端口配置
+	HTTPPort = getEnvInt("PORT", 8000)
+
+	// 超时配置
+	ReadTimeout = time.Duration(getEnvInt("READ_TIMEOUT", 60)) * time.Second
+	WriteTimeout = time.Duration(getEnvInt("WRITE_TIMEOUT", 60)) * time.Second
 }
 
+// LoadApp 加载应用配置
 func LoadApp() {
-	sec, err := Cfg.GetSection("app")
-	if err != nil {
-		log.Fatalf("Fail to get section 'app': %v", err)
-	}
+	// JWT 密钥
+	JwtSecret = getEnv("JWT_SECRET", "!@)*#)!@U#@*!@!)")
 
-	JwtSecret = sec.Key("JWT_SECRET").MustString("!@)*#)!@U#@*!@!)")
-	PageSize = sec.Key("PAGE_SIZE").MustInt(10)
+	// 分页大小
+	PageSize = getEnvInt("PAGE_SIZE", 10)
 }
 
+// LoadDatabase 加载数据库配置
 func LoadDatabase() {
-	// 从环境变量读取数据库连接
-	DatabaseURL = os.Getenv("DATABASE_URL")
-	if DatabaseURL == "" {
-		log.Fatal("DATABASE_URL environment variable is required")
-	}
+	// 数据库连接字符串
+	DatabaseURL = getEnv("DATABASE_URL", "")
 }
 
+// LoadCORS 加载 CORS 配置
 func LoadCORS() {
-    sec, err := Cfg.GetSection("cors")
-    if err != nil {
-        // 未配置 cors 段落则使用默认值
-        CORSAllowedOrigins = []string{
-            "http://127.0.0.1:8080",
-            "http://localhost:1313",
-        }
-        CORSAllowedMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-        CORSAllowedHeaders = []string{"Content-Type", "Authorization", "Accept-Encoding", "Content-Length"}
-        CORSCredentials = true
-        return
-    }
+	// 允许的来源
+	origins := getEnv("CORS_ALLOWED_ORIGINS", "")
+	CORSAllowedOrigins = splitAndTrim(origins)
 
-    CORSAllowedOrigins = splitAndTrim(sec.Key("ALLOWED_ORIGINS").MustString("http://127.0.0.1:8080,http://localhost:1313"))
-    CORSAllowedMethods = splitAndTrim(sec.Key("ALLOWED_METHODS").MustString("GET,POST,PUT,DELETE,OPTIONS"))
-    CORSAllowedHeaders = splitAndTrim(sec.Key("ALLOWED_HEADERS").MustString("Content-Type,Authorization,Accept-Encoding,Content-Length"))
-    CORSCredentials = sec.Key("ALLOW_CREDENTIALS").MustBool(true)
+	// 允许的方法
+	methods := getEnv("CORS_ALLOWED_METHODS", "")
+	CORSAllowedMethods = splitAndTrim(methods)
+
+	// 允许的头部
+	headers := getEnv("CORS_ALLOWED_HEADERS", "")
+	CORSAllowedHeaders = splitAndTrim(headers)
+
+	// 是否允许携带凭据
+	CORSCredentials = getEnvBool("CORS_CREDENTIALS", false)
 }
 
+// getEnv 获取环境变量，如果不存在则返回默认值
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvInt 获取环境变量并转换为整数，如果不存在或转换失败则返回默认值
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
+	}
+	return defaultValue
+}
+
+// getEnvBool 获取环境变量并转换为布尔值，如果不存在或转换失败则返回默认值
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
+		}
+	}
+	return defaultValue
+}
+
+// splitAndTrim 分割字符串并去除空白字符
 func splitAndTrim(s string) []string {
-    var result []string
-    cur := ""
-    for i := 0; i < len(s); i++ {
-        if s[i] == ',' {
-            if len(cur) > 0 {
-                result = append(result, trimSpaces(cur))
-                cur = ""
-            }
-        } else {
-            cur += string(s[i])
-        }
-    }
-    if len(cur) > 0 {
-        result = append(result, trimSpaces(cur))
-    }
-    return result
+	if s == "" {
+		return []string{}
+	}
+
+	var result []string
+	parts := strings.Split(s, ",")
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
 
-func trimSpaces(s string) string {
-    start := 0
-    end := len(s)
-    for start < end && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n' || s[start] == '\r') {
-        start++
-    }
-    for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n' || s[end-1] == '\r') {
-        end--
-    }
-    return s[start:end]
+// PrintConfig 打印当前配置（用于调试）
+func PrintConfig() {
+	log.Printf("=== 当前配置 ===")
+	log.Printf("运行模式: %s", RunMode)
+	log.Printf("HTTP 端口: %d", HTTPPort)
+	log.Printf("读取超时: %v", ReadTimeout)
+	log.Printf("写入超时: %v", WriteTimeout)
+	log.Printf("分页大小: %d", PageSize)
+	log.Printf("数据库 URL: %s", maskSensitiveInfo(DatabaseURL))
+	log.Printf("CORS 允许来源: %v", CORSAllowedOrigins)
+	log.Printf("CORS 允许方法: %v", CORSAllowedMethods)
+	log.Printf("CORS 允许头部: %v", CORSAllowedHeaders)
+	log.Printf("CORS 允许凭据: %t", CORSCredentials)
+	log.Printf("================")
+}
+
+// maskSensitiveInfo 遮蔽敏感信息
+func maskSensitiveInfo(s string) string {
+	if len(s) <= 8 {
+		return "***"
+	}
+	return s[:4] + "***" + s[len(s)-4:]
 }

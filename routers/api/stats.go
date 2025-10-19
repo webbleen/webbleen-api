@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/webbleen/go-gin/models/database"
@@ -148,22 +149,22 @@ func GetUserBehavior(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/pages [get]
 func GetTopPages(c *gin.Context) {
-    limit := 10
-    if v := c.Query("limit"); v != "" {
-        if n, err := strconv.Atoi(v); err == nil {
-            limit = n
-        }
-    }
-    start := c.Query("start_date")
-    end := c.Query("end_date")
-    language := c.Query("language")
+	limit := 10
+	if v := c.Query("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			limit = n
+		}
+	}
+	start := c.Query("start_date")
+	end := c.Query("end_date")
+	language := c.Query("language")
 
-    stats, err := database.GetTopPages(limit, start, end, language)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get pages", "data": gin.H{}})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": gin.H{"pages": stats}})
+	stats, err := database.GetTopPages(limit, start, end, language)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get pages", "data": gin.H{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": gin.H{"pages": stats}})
 }
 
 // GetTrend 获取访问趋势
@@ -177,19 +178,19 @@ func GetTopPages(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/trend [get]
 func GetTrend(c *gin.Context) {
-    days := 30
-    if v := c.Query("days"); v != "" {
-        if n, err := strconv.Atoi(v); err == nil {
-            days = n
-        }
-    }
-    language := c.Query("language")
-    res, err := database.GetTrend(days, language)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get trend", "data": gin.H{}})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": res})
+	days := 30
+	if v := c.Query("days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			days = n
+		}
+	}
+	language := c.Query("language")
+	res, err := database.GetTrend(days, language)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get trend", "data": gin.H{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": res})
 }
 
 // GetDaily 获取日统计（与趋势同结构，主要用于固定时间窗口或分页）
@@ -203,19 +204,19 @@ func GetTrend(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/daily [get]
 func GetDaily(c *gin.Context) {
-    days := 30
-    if v := c.Query("days"); v != "" {
-        if n, err := strconv.Atoi(v); err == nil {
-            days = n
-        }
-    }
-    language := c.Query("language")
-    res, err := database.GetTrend(days, language)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get daily", "data": gin.H{}})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": gin.H{"points": res.Points}})
+	days := 30
+	if v := c.Query("days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			days = n
+		}
+	}
+	language := c.Query("language")
+	res, err := database.GetTrend(days, language)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get daily", "data": gin.H{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": gin.H{"points": res.Points}})
 }
 
 // GetContentStats 获取内容统计
@@ -227,12 +228,12 @@ func GetDaily(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/content [get]
 func GetContentStats(c *gin.Context) {
-    res, err := database.GetContentStats()
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get content stats", "data": gin.H{}})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": res})
+	res, err := database.GetContentStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to get content stats", "data": gin.H{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": res})
 }
 
 // UpdateContentStats 更新内容统计
@@ -245,18 +246,18 @@ func GetContentStats(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "成功"
 // @Router /stats/content [post]
 func UpdateContentStats(c *gin.Context) {
-    var payload struct {
-        Articles   int `json:"articles"`
-        Tags       int `json:"tags"`
-        Categories int `json:"categories"`
-    }
-    if err := c.ShouldBindJSON(&payload); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "Invalid JSON data", "data": gin.H{}})
-        return
-    }
-    if err := database.UpdateContentStats(payload.Articles, payload.Tags, payload.Categories); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to update content stats", "data": gin.H{}})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": gin.H{"updated": true}})
+	var payload struct {
+		Articles   int `json:"articles"`
+		Tags       int `json:"tags"`
+		Categories int `json:"categories"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "Invalid JSON data", "data": gin.H{}})
+		return
+	}
+	if err := database.UpdateContentStats(payload.Articles, payload.Tags, payload.Categories); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": e.ERROR, "msg": "Failed to update content stats", "data": gin.H{}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": e.SUCCESS, "msg": e.GetMsg(e.SUCCESS), "data": gin.H{"updated": true}})
 }

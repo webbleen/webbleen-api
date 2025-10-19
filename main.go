@@ -29,6 +29,9 @@ import (
 )
 
 func main() {
+	// 打印配置信息
+	setting.PrintConfig()
+
 	endless.DefaultReadTimeOut = setting.ReadTimeout
 	endless.DefaultWriteTimeOut = setting.WriteTimeout
 	endless.DefaultMaxHeaderBytes = 1 << 20

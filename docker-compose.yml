@@ -1,27 +1,28 @@
-version: '3.8'
 services:
   webbleen-api:
     build: .
     ports:
-      - "8000:8000"
+      - "8080:8000"
     environment:
-      - DATABASE_URL=postgres://webbleen:password@postgres:5432/webbleen_api?sslmode=disable
-      - RUN_MODE=debug
-    depends_on:
-      - postgres
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_USER=webbleen
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=webbleen_api
-    ports:
-      - "5432:5432"
+      # 服务器配置
+      - PORT=8000
+      - GIN_MODE=debug
+      - READ_TIMEOUT=60
+      - WRITE_TIMEOUT=60
+      
+      # 数据库配置
+      - DATABASE_URL=postgres://postgres:password@host.docker.internal:5432/webbleen_api?sslmode=disable
+      
+      
+      # CORS 配置
+      - CORS_ALLOWED_ORIGINS=http://127.0.0.1:8080,http://localhost:1313,https://webbleen.com,https://www.webbleen.com
+      - CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
+      - CORS_ALLOWED_HEADERS=Content-Type,Authorization,Accept-Encoding,Content-Length
+      - CORS_CREDENTIALS=true
+      
+      # 应用配置
+      - JWT_SECRET=!@)*#)!@U#@*!@!)
+      - PAGE_SIZE=10
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./logs:/app/logs
     restart: unless-stopped
-
-volumes:
-  postgres_data:

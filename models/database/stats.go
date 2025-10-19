@@ -4,9 +4,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/webbleen/go-gin/models/response"
+	"gorm.io/gorm"
 )
+
+// Model 基础模型
+type Model struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	CreatedOn  time.Time `json:"created_on"`
+	ModifiedOn time.Time `json:"modified_on"`
+}
 
 // VisitRecord 访问记录模型
 type VisitRecord struct {
@@ -26,18 +33,18 @@ type VisitRecord struct {
 
 // ContentStats 内容统计表
 type ContentStats struct {
-    Model
-    TotalArticles   int       `json:"total_articles"`
-    TotalTags       int       `json:"total_tags"`
-    TotalCategories int       `json:"total_categories"`
-    LastUpdate      time.Time `json:"last_update"`
+	Model
+	TotalArticles   int       `json:"total_articles"`
+	TotalTags       int       `json:"total_tags"`
+	TotalCategories int       `json:"total_categories"`
+	LastUpdate      time.Time `json:"last_update"`
 }
 
 // 访问记录相关方法
 func AddVisitRecord(record *VisitRecord) bool {
 	// 在存储前解析URL，将编码的路径转换为可读格式
 	record.Page = ParseURL(record.Page)
-	db.Create(record)
+	DB.Create(record)
 	return true
 }
 
@@ -47,10 +54,10 @@ func CheckVisitExists(sessionID, page string) bool {
 	// 解析URL，确保比较的是解析后的格式
 	parsedPage := ParseURL(page)
 	var count int64
-	db.Model(&VisitRecord{}).
+	DB.Model(&VisitRecord{}).
 		Where("session_id = ? AND page = ? AND DATE(created_on) = ?", sessionID, parsedPage, today).
 		Count(&count)
-	return count > 0
+	return int(count) > 0
 }
 
 // ParseURL 解析URL，将编码的路径转换为可读格式
@@ -92,9 +99,9 @@ func ParseURL(rawURL string) string {
 }
 
 func GetTodayVisits(language string) int {
-	var count int
+	var count int64
 	today := time.Now().Format("2006-01-02")
-	query := db.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
+	query := DB.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
 	if language != "" {
 		query = query.Where("language = ?", language)
 	} else {
@@ -103,12 +110,12 @@ func GetTodayVisits(language string) int {
 	}
 	// 统计所有页面访问（不按session_id去重，每个页面访问都算一次）
 	query.Count(&count)
-	return count
+	return int(count)
 }
 
 func GetTotalVisits(language string) int {
-	var count int
-	query := db.Model(&VisitRecord{})
+	var count int64
+	query := DB.Model(&VisitRecord{})
 	if language != "" {
 		query = query.Where("language = ?", language)
 	} else {
@@ -117,13 +124,13 @@ func GetTotalVisits(language string) int {
 	}
 	// 统计所有页面访问（不按session_id去重，每个页面访问都算一次）
 	query.Count(&count)
-	return count
+	return int(count)
 }
 
 func GetUniqueVisitorsToday(language string) int {
-	var count int
+	var count int64
 	today := time.Now().Format("2006-01-02")
-	query := db.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
+	query := DB.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
 	if language != "" {
 		query = query.Where("language = ?", language)
 	} else {
@@ -131,14 +138,14 @@ func GetUniqueVisitorsToday(language string) int {
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
 	query.Group("ip").Count(&count)
-	return count
+	return int(count)
 }
 
 // GetTodayUniqueSessions 获取今日独立会话数（按session_id去重）
 func GetTodayUniqueSessions(language string) int {
-	var count int
+	var count int64
 	today := time.Now().Format("2006-01-02")
-	query := db.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
+	query := DB.Model(&VisitRecord{}).Where("DATE(created_on) = ?", today)
 	if language != "" {
 		query = query.Where("language = ?", language)
 	} else {
@@ -146,13 +153,13 @@ func GetTodayUniqueSessions(language string) int {
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
 	query.Group("session_id").Count(&count)
-	return count
+	return int(count)
 }
 
 // GetTotalUniqueSessions 获取总独立会话数（按session_id去重）
 func GetTotalUniqueSessions(language string) int {
-	var count int
-	query := db.Model(&VisitRecord{})
+	var count int64
+	query := DB.Model(&VisitRecord{})
 	if language != "" {
 		query = query.Where("language = ?", language)
 	} else {
@@ -160,26 +167,26 @@ func GetTotalUniqueSessions(language string) int {
 		query = query.Where("language IS NOT NULL AND language != ''")
 	}
 	query.Group("session_id").Count(&count)
-	return count
+	return int(count)
 }
 
 // 用户行为分析
 func GetUserBehaviorStats() *response.UserBehaviorResult {
 	// 设备统计
 	var deviceStats []response.DeviceStat
-	db.Model(&VisitRecord{}).Select("device, count(*) as count").Group("device").Find(&deviceStats)
+	DB.Model(&VisitRecord{}).Select("device, count(*) as count").Group("device").Find(&deviceStats)
 
 	// 浏览器统计
 	var browserStats []response.BrowserStat
-	db.Model(&VisitRecord{}).Select("browser, count(*) as count").Group("browser").Find(&browserStats)
+	DB.Model(&VisitRecord{}).Select("browser, count(*) as count").Group("browser").Find(&browserStats)
 
 	// 操作系统统计
 	var osStats []response.OSStat
-	db.Model(&VisitRecord{}).Select("os, count(*) as count").Group("os").Find(&osStats)
+	DB.Model(&VisitRecord{}).Select("os, count(*) as count").Group("os").Find(&osStats)
 
 	// 地理位置统计
 	var locationStats []response.LocationStat
-	db.Model(&VisitRecord{}).Select("country, city, count(*) as count").Group("country, city").Order("count DESC").Limit(10).Find(&locationStats)
+	DB.Model(&VisitRecord{}).Select("country, city, count(*) as count").Group("country, city").Order("count DESC").Limit(10).Find(&locationStats)
 
 	return &response.UserBehaviorResult{
 		Devices:          deviceStats,
@@ -191,155 +198,162 @@ func GetUserBehaviorStats() *response.UserBehaviorResult {
 
 // 热门页面统计（可限制数量）
 func GetTopPages(limit int, startDate, endDate string, language string) ([]response.PageStat, error) {
-    if limit <= 0 || limit > 100 {
-        limit = 10
-    }
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
 
-    query := db.Model(&VisitRecord{})
-    if startDate != "" {
-        query = query.Where("DATE(created_on) >= ?", startDate)
-    }
-    if endDate != "" {
-        query = query.Where("DATE(created_on) <= ?", endDate)
-    }
-    if language != "" {
-        query = query.Where("language = ?", language)
-    }
+	query := DB.Model(&VisitRecord{})
+	if startDate != "" {
+		query = query.Where("DATE(created_on) >= ?", startDate)
+	}
+	if endDate != "" {
+		query = query.Where("DATE(created_on) <= ?", endDate)
+	}
+	if language != "" {
+		query = query.Where("language = ?", language)
+	}
 
-    type row struct {
-        Page  string
-        Count int
-    }
-    var rows []row
-    err := query.Select("page, count(*) as count").
-        Group("page").
-        Order("count DESC").
-        Limit(limit).
-        Scan(&rows).Error
-    if err != nil {
-        return nil, err
-    }
+	type row struct {
+		Page  string
+		Count int
+	}
+	var rows []row
+	err := query.Select("page, count(*) as count").
+		Group("page").
+		Order("count DESC").
+		Limit(limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
 
-    stats := make([]response.PageStat, 0, len(rows))
-    for _, r := range rows {
-        stats = append(stats, response.PageStat{Page: r.Page, Count: r.Count})
-    }
-    return stats, nil
+	stats := make([]response.PageStat, 0, len(rows))
+	for _, r := range rows {
+		stats = append(stats, response.PageStat{Page: r.Page, Count: r.Count})
+	}
+	return stats, nil
 }
 
 // 趋势/日统计（按天聚合）
 func GetTrend(days int, language string) (*response.TrendResult, error) {
-    if days <= 0 || days > 365 {
-        days = 30
-    }
-    // 计算起始日期（含当天）
-    start := time.Now().AddDate(0, 0, -days+1).Format("2006-01-02")
+	if days <= 0 || days > 365 {
+		days = 30
+	}
+	// 计算起始日期（含当天）
+	start := time.Now().AddDate(0, 0, -days+1).Format("2006-01-02")
 
-    type row struct {
-        Date  string
-        Count int
-    }
+	type row struct {
+		Date  string
+		Count int
+	}
 
-    // 访问量（不去重）
-    query := db.Model(&VisitRecord{}).Where("DATE(created_on) >= ?", start)
-    if language != "" {
-        query = query.Where("language = ?", language)
-    }
-    var visitRows []row
-    err := query.Select("DATE(created_on) as date, COUNT(*) as count").
-        Group("DATE(created_on)").
-        Order("date").
-        Scan(&visitRows).Error
-    if err != nil {
-        return nil, err
-    }
+	// 访问量（不去重）
+	query := DB.Model(&VisitRecord{}).Where("DATE(created_on) >= ?", start)
+	if language != "" {
+		query = query.Where("language = ?", language)
+	}
+	var visitRows []row
+	err := query.Select("DATE(created_on) as date, COUNT(*) as count").
+		Group("DATE(created_on)").
+		Order("date").
+		Scan(&visitRows).Error
+	if err != nil {
+		return nil, err
+	}
 
-    // 独立访客（按 IP 去重）
-    var uvRows []row
-    err = db.Model(&VisitRecord{}).
-        Where("DATE(created_on) >= ?", start).
-        Scopes(withLanguage(language)).
-        Select("DATE(created_on) as date, COUNT(DISTINCT ip) as count").
-        Group("DATE(created_on)").
-        Order("date").
-        Scan(&uvRows).Error
-    if err != nil {
-        return nil, err
-    }
+	// 独立访客（按 IP 去重）
+	var uvRows []row
+	err = DB.Model(&VisitRecord{}).
+		Where("DATE(created_on) >= ?", start).
+		Scopes(withLanguage(language)).
+		Select("DATE(created_on) as date, COUNT(DISTINCT ip) as count").
+		Group("DATE(created_on)").
+		Order("date").
+		Scan(&uvRows).Error
+	if err != nil {
+		return nil, err
+	}
 
-    // 独立会话（按 session_id 去重）
-    var usRows []row
-    err = db.Model(&VisitRecord{}).
-        Where("DATE(created_on) >= ?", start).
-        Scopes(withLanguage(language)).
-        Select("DATE(created_on) as date, COUNT(DISTINCT session_id) as count").
-        Group("DATE(created_on)").
-        Order("date").
-        Scan(&usRows).Error
-    if err != nil {
-        return nil, err
-    }
+	// 独立会话（按 session_id 去重）
+	var usRows []row
+	err = DB.Model(&VisitRecord{}).
+		Where("DATE(created_on) >= ?", start).
+		Scopes(withLanguage(language)).
+		Select("DATE(created_on) as date, COUNT(DISTINCT session_id) as count").
+		Group("DATE(created_on)").
+		Order("date").
+		Scan(&usRows).Error
+	if err != nil {
+		return nil, err
+	}
 
-    // 合并到完整连续的日期序列
-    visitMap := make(map[string]int)
-    for _, r := range visitRows { visitMap[r.Date] = r.Count }
-    uvMap := make(map[string]int)
-    for _, r := range uvRows { uvMap[r.Date] = r.Count }
-    usMap := make(map[string]int)
-    for _, r := range usRows { usMap[r.Date] = r.Count }
+	// 合并到完整连续的日期序列
+	visitMap := make(map[string]int)
+	for _, r := range visitRows {
+		visitMap[r.Date] = r.Count
+	}
+	uvMap := make(map[string]int)
+	for _, r := range uvRows {
+		uvMap[r.Date] = r.Count
+	}
+	usMap := make(map[string]int)
+	for _, r := range usRows {
+		usMap[r.Date] = r.Count
+	}
 
-    points := make([]response.TrendPoint, 0, days)
-    startTime, _ := time.Parse("2006-01-02", start)
-    for i := 0; i < days; i++ {
-        d := startTime.AddDate(0, 0, i).Format("2006-01-02")
-        points = append(points, response.TrendPoint{
-            Date:           d,
-            Visits:         visitMap[d],
-            UniqueVisitors: uvMap[d],
-            UniqueSessions: usMap[d],
-        })
-    }
-    return &response.TrendResult{Points: points}, nil
+	points := make([]response.TrendPoint, 0, days)
+	startTime, _ := time.Parse("2006-01-02", start)
+	for i := 0; i < days; i++ {
+		d := startTime.AddDate(0, 0, i).Format("2006-01-02")
+		points = append(points, response.TrendPoint{
+			Date:           d,
+			Visits:         visitMap[d],
+			UniqueVisitors: uvMap[d],
+			UniqueSessions: usMap[d],
+		})
+	}
+	return &response.TrendResult{Points: points}, nil
 }
 
 func withLanguage(language string) func(*gorm.DB) *gorm.DB {
-    return func(tx *gorm.DB) *gorm.DB {
-        if language != "" {
-            return tx.Where("language = ?", language)
-        }
-        return tx
-    }
+	return func(tx *gorm.DB) *gorm.DB {
+		if language != "" {
+			return tx.Where("language = ?", language)
+		}
+		return tx
+	}
 }
 
 // 内容统计读
 func GetContentStats() (*response.ContentStatsResponse, error) {
-    var cs ContentStats
-    // 仅取最新一条
-    err := db.Order("modified_on DESC").First(&cs).Error
-    if err != nil && !gorm.IsRecordNotFoundError(err) {
-        return nil, err
-    }
-    res := &response.ContentStatsResponse{
-        TotalArticles:   cs.TotalArticles,
-        TotalTags:       cs.TotalTags,
-        TotalCategories: cs.TotalCategories,
-    }
-    if !cs.ModifiedOn.IsZero() {
-        res.LastUpdate = cs.ModifiedOn.Format("2006-01-02 15:04:05")
-    }
-    return res, nil
+	var cs ContentStats
+	// 仅取最新一条
+	err := DB.Order("modified_on DESC").First(&cs).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+	res := &response.ContentStatsResponse{
+		TotalArticles:   cs.TotalArticles,
+		TotalTags:       cs.TotalTags,
+		TotalCategories: cs.TotalCategories,
+	}
+	if !cs.ModifiedOn.IsZero() {
+		res.LastUpdate = cs.ModifiedOn.Format("2006-01-02 15:04:05")
+	}
+	return res, nil
 }
 
 // 内容统计写（新增一条快照）
 func UpdateContentStats(articles, tags, categories int) error {
-    cs := ContentStats{
-        TotalArticles:   articles,
-        TotalTags:       tags,
-        TotalCategories: categories,
-        LastUpdate:      time.Now(),
-    }
-    return db.Create(&cs).Error
+	cs := ContentStats{
+		TotalArticles:   articles,
+		TotalTags:       tags,
+		TotalCategories: categories,
+		LastUpdate:      time.Now(),
+	}
+	return DB.Create(&cs).Error
 }
+
 // 分页获取访问记录
 func GetVisitRecords(page, pageSize int, language string) (*response.VisitRecordsResult, error) {
 	// 限制每页最大数量
@@ -351,7 +365,7 @@ func GetVisitRecords(page, pageSize int, language string) (*response.VisitRecord
 	offset := (page - 1) * pageSize
 
 	// 构建查询
-	query := db.Model(&VisitRecord{})
+	query := DB.Model(&VisitRecord{})
 
 	// 语言过滤
 	if language != "" {
@@ -377,7 +391,7 @@ func GetVisitRecords(page, pageSize int, language string) (*response.VisitRecord
 	var responseRecords []response.VisitRecord
 	for _, record := range records {
 		responseRecords = append(responseRecords, response.VisitRecord{
-			ID:         record.ID,
+			ID:         int(record.ID),
 			IP:         record.IP,
 			UserAgent:  record.UserAgent,
 			Referer:    record.Referer,
@@ -428,42 +442,42 @@ func GetVisitOverview() (*response.VisitOverviewResult, error) {
 	// 按语言统计
 	languageStats := make(map[string]int64)
 	var languages []string
-	db.Model(&VisitRecord{}).
+	DB.Model(&VisitRecord{}).
 		Select("language").
 		Group("language").
 		Pluck("language", &languages)
 
 	for _, lang := range languages {
 		var count int64
-		db.Model(&VisitRecord{}).Where("language = ?", lang).Count(&count)
+		DB.Model(&VisitRecord{}).Where("language = ?", lang).Count(&count)
 		languageStats[lang] = count
 	}
 
 	// 按设备统计
 	deviceStats := make(map[string]int64)
 	var devices []string
-	db.Model(&VisitRecord{}).
+	DB.Model(&VisitRecord{}).
 		Select("device").
 		Group("device").
 		Pluck("device", &devices)
 
 	for _, device := range devices {
 		var count int64
-		db.Model(&VisitRecord{}).Where("device = ?", device).Count(&count)
+		DB.Model(&VisitRecord{}).Where("device = ?", device).Count(&count)
 		deviceStats[device] = count
 	}
 
 	// 按国家统计
 	countryStats := make(map[string]int64)
 	var countries []string
-	db.Model(&VisitRecord{}).
+	DB.Model(&VisitRecord{}).
 		Select("country").
 		Group("country").
 		Pluck("country", &countries)
 
 	for _, country := range countries {
 		var count int64
-		db.Model(&VisitRecord{}).Where("country = ?", country).Count(&count)
+		DB.Model(&VisitRecord{}).Where("country = ?", country).Count(&count)
 		countryStats[country] = count
 	}
 
@@ -479,9 +493,9 @@ func GetVisitOverview() (*response.VisitOverviewResult, error) {
 	}, nil
 }
 
-func (visitRecord *VisitRecord) BeforeCreate(scope *gorm.Scope) error {
+func (visitRecord *VisitRecord) BeforeCreate(tx *gorm.DB) error {
 	now := time.Now()
-	scope.SetColumn("CreatedOn", now)
-	scope.SetColumn("ModifiedOn", now)
+	visitRecord.CreatedOn = now
+	visitRecord.ModifiedOn = now
 	return nil
 }
